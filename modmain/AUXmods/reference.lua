@@ -1,0 +1,35 @@
+---
+--- @author zsh in 2023/4/7 1:10
+---
+
+-- 2023-04-07-11:53：今天突然就正常了。。。莫名其妙。
+--local import = kleiloadlua(MODROOT .. "scripts/more_items/reference/insight/scripts/import.lua")();
+--local Color = import("more_items/reference/insight/scripts/color");
+--table.insert(env.PrefabFiles, "mone/reference/insight/range_indicator");
+--for _, name in ipairs({ "firesuppressor", "mone_firesuppressor" }) do
+--    env.AddPrefabPostInit(name, function(inst)
+--        if inst.components.deployhelper == nil then
+--            inst:AddComponent("deployhelper");
+--        end
+--        if inst.components.deployhelper then
+--            inst.mi_firesuppressor_range = SpawnPrefab("more_items_range_indicator")
+--            if inst.mi_firesuppressor_range == nil then
+--                return inst;
+--            end
+--            inst.mi_firesuppressor_range:Attach(inst)
+--            inst.mi_firesuppressor_range:SetRadius(12 / 4)
+--            inst.mi_firesuppressor_range:SetColour(Color.fromHex("#6F3483")); -- 正常 95BFF2 红 6F3483
+--            inst.mi_firesuppressor_range:SetVisible(true)
+--
+--            -- 干草叉的时候才显示
+--            inst.mi_firesuppressor_range:SetVisible(false);
+--            inst.components.deployhelper.onenablehelper = function(inst, active, ...)
+--                inst.mi_firesuppressor_range:SetVisible(active);
+--            end
+--
+--            if not TheWorld.ismastersim then
+--                return inst;
+--            end
+--        end
+--    end)
+--end

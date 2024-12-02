@@ -1,0 +1,203 @@
+local function LowPriority(tab, key, value)
+    return tab[key] ~= nil and tab[key] or value;
+end
+
+------------
+-- Weapon --
+------------
+--TODO: Maybe put altcondition in an OnUpdate check to automatically swap the weapon's alt state?
+AddComponentPostInit("weapon", function(self)
+    self.hasaltattack = LowPriority(self, "hasaltattack", false);
+    self.isaltattacking = LowPriority(self, "isaltattacking", false);
+    self.altattackrange = LowPriority(self, "altattackrange", nil);
+    self.althitrange = LowPriority(self, "althitrange", nil);
+    self.altdamage = LowPriority(self, "altdamage", nil);
+    self.altdamagecalc = LowPriority(self, "altdamagecalc", nil);
+    self.altcondition = LowPriority(self, "altcondition", nil);
+    self.altprojectile = LowPriority(self, "altprojectile", nil);
+    self._projectile = LowPriority(self, "_projectile", nil);
+    self.damagetype = LowPriority(self, "damagetype", nil);
+    self.altdamagetype = LowPriority(self, "altdamagetype", nil);
+    self._damagetype = LowPriority(self, "_damagetype", nil);
+    self.launch_pos_override_fn = LowPriority(self, "launch_pos_override_fn", nil);
+    self.sync_projectile = LowPriority(self, "sync_projectile", nil);
+    self.hit_weight = LowPriority(self, "hit_weight", nil);
+    self.hit_weight_fn = LowPriority(self, "hit_weight_fn", nil);
+
+    -- 2023-05-22：不对啊，开启熔炉模式的时候，其他模组都是失效的吧？那我没必要考虑覆盖了熔炉的组件啊....
+
+    function self:SetDamageType(damagetype)
+        self.damagetype = damagetype
+        self._damagetype = damagetype
+    end
+
+    function self:SetDamageType(stimuli)
+        self.stimuli = stimuli
+    end
+
+    --Trying to fix invisible poj after using the AltAtk
+    function self:SetProjectile(projectile)
+        self.projectile = projectile
+        self._projectile = projectile
+    end
+
+    if not self.GetLaunchPositionOverride then
+        function self:GetLaunchPositionOverride(attacker)
+            return self.launch_pos_override_fn and self.launch_pos_override_fn(self.inst, attacker)
+        end
+    end
+
+    function self:SetLaunchPositionOverride(pos)
+        self.launch_pos_override_fn = pos
+    end
+
+    function self:SyncProjectile(val)
+        self.sync_projectile = val
+    end
+
+    function self:GetHitWeight()
+        return self.hit_weight_fn and self.hit_weight_fn(self.inst) or self.hit_weight
+    end
+
+    function self:SetHitWeight(val)
+        self.hit_weight = val
+    end
+
+    function self:SetHitWeightFN(fn)
+        self.hit_weight_fn = fn
+    end
+
+    function self:SetAltAttack(damage, range, proj, damagetype, damagecalcfn, conditionfn)
+        --Used to give weapons a 2nd attack
+        self.hasaltattack = true
+        self.altdamage = damage ~= nil and damage or self.damage
+        if range ~= nil then
+            self.altattackrange = (type(range) == "table" and range[1] or type(range) ~= "table" and range) or self.attackrange
+            self.althitrange = type(range) == "table" and range[2] or self.altattackrange
+        else
+            --Uhmmmm.......... Is this healthy?
+            self.altattackrange = 20
+            self.althitrange = 20
+        end
+        self.base_alt_attack_range = self.altattackrange
+        self.base_alt_hit_range = self.althitrange
+        self.altprojectile = proj --Not required, only uses projectile and complexprojectile. An aimedprojectile alt needs to be used through something like aoespell
+        self.altdamagetype = damagetype ~= nil and damagetype or self.damagetype --Used incase an alt attack is a different damagetype than the main attack
+        self.altdamagecalc = damagecalcfn --Used for when the damage could turn out as a different value under a specific circumstance like with infernal staff (Will default to self.altdamage)
+        self.altcondition = conditionfn --Used for telling the weapon when it should alt attack
+
+        if self.altdamagecalc then
+            local _olddamagecalc = self.altdamagecalc
+            self.altdamagecalc = function(weapon, attacker, target)
+                local dmg = _olddamagecalc(weapon, attacker, target)
+                return dmg ~= nil and dmg or self.altdamage
+            end
+        end
+
+        if self.inst.replica.inventoryitem then
+            self.inst.replica.inventoryitem:SetAltAttackRange(self.altattackrange)
+        end
+    end
+
+    function self:UpdateAltAttackRange(attack_range, hit_range, owner)
+        local owner = owner or self.inst.components.inventoryitem and self.inst.components.inventoryitem.owner
+        self.base_alt_attack_range = attack_range or self.base_alt_attack_range or 0
+        self.base_alt_hit_range = hit_range or self.base_alt_hit_range or 0
+        if owner and owner.components.scaler then
+            local scale = owner.components.scaler.scale
+            self.altattackrange = self.base_alt_attack_range * scale
+            self.althitrange = self.base_alt_hit_range * scale
+        else
+            self.altattackrange = self.base_alt_attack_range
+            self.althitrange = self.base_alt_hit_range
+        end
+        if self.inst.replica.inventoryitem then
+            self.inst.replica.inventoryitem:SetAltAttackRange(self.altattackrange)
+        end
+    end
+
+    function self:SetIsAltAttacking(alt, no_netvar)
+        self.isaltattacking = alt
+        if self.inst.replica.inventoryitem then
+            --and not no_netvar then
+            self.inst.replica.inventoryitem:SetIsAltAttacking(alt)
+        end
+        --*intense grumbling*
+        if alt then
+            self.projectile = self.altprojectile
+            self.damagetype = self.altdamagetype
+        else
+            self.projectile = self._projectile
+            self.damagetype = self._damagetype
+        end
+    end
+
+    function self:HasAltAttack()
+        return self.hasaltattack
+    end
+
+    function self:CanAltAttack()
+        if self:HasAltAttack() and self.isaltattacking then
+            return self.altcondition ~= nil and self.altcondition(self.inst) or true
+        end
+    end
+
+    _oldCanRangedAttack = self.CanRangedAttack
+    function self:CanRangedAttack()
+        return self:CanAltAttack() and self.altprojectile or _oldCanRangedAttack(self)
+    end
+
+    function self:DoAltAttack(attacker, target_override, projectile, stimuli, instancemult, damage_override, damage_type)
+        --Used to force an alt attack out for situations where the alt system is handled seperately like with aoespell
+        self:SetIsAltAttacking(true, true)
+        --Set setalt to true if the alt is a single attack or AOE attack.
+        --If the alt hits rapidly though, leave it false and control SetIsAltAttacking before and after the rapid attacks all trigger (This way we avoid rapidly pushing a netbool)
+        if attacker and attacker.components.combat and self:CanAltAttack() then
+            if target_override and type(target_override) == "table" and not target_override.prefab then
+                --You can pass a table of collected entities through the target_override argument to do an AOE attack
+                for _, ent in ipairs(target_override) do
+                    if ent ~= attacker and attacker.components.combat:IsValidTarget(ent) and ent.components.health and not ent.components.health:IsDead() then
+                        --I'm deciding not to push this event since mob collection occurs before this function runs and
+                        --I don't want 2 events pushed for every attack
+                        --attacker:PushEvent("onareaattackother", { target = ent, weapon = self.inst, stimuli = stimuli }) --
+                        --DoAttack(target, weapon, projectile, stimuli, instancemult, damage_override, is_alt, is_special, damage_type)
+                        attacker.components.combat:DoAttack(ent, self.inst, projectile, stimuli, instancemult, damage_override, true, nil, damage_type)
+                    end
+                    --attacker:PushEvent("alt_attack_complete", {})
+                end
+            else
+                if attacker.components.combat:IsValidTarget(target_override) then
+                    attacker.components.combat:DoAttack(target_override, self.inst, projectile, stimuli, instancemult, damage_override, true, nil, damage_type)
+                end
+            end
+        end
+        attacker:PushEvent("alt_attack_complete", { weapon = self.inst })
+        self:SetIsAltAttacking(false, true)
+    end
+
+    -- Basically default function with the added damage parameter so that projectile damage is set on throw and not impact.
+    function self:LaunchProjectile(attacker, target, damage)
+        if self.projectile then
+            if self.onprojectilelaunch then
+                self.onprojectilelaunch(self.inst, attacker, target, damage)
+            end
+
+            local proj = _G.SpawnPrefab(self.projectile)
+            if proj then
+                if proj.components.projectile then
+                    proj.Transform:SetPosition(attacker.Transform:GetWorldPosition())
+                    proj.components.projectile:Throw(self.inst, target, attacker, damage)
+                    if self.inst.projectiledelay then
+                        proj.components.projectile:DelayVisibility(self.inst.projectiledelay)
+                    end
+                elseif proj.components.complexprojectile then
+                    proj.Transform:SetPosition(attacker.Transform:GetWorldPosition())
+                    proj.components.complexprojectile:Launch(target:GetPosition(), attacker, self.inst, damage)
+                end
+                if self.onprojectilelaunched then
+                    self.onprojectilelaunched(self.inst, attacker, target, proj)
+                end
+            end
+        end
+    end
+end)

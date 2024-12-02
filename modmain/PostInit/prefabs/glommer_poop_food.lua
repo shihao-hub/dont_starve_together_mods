@@ -1,0 +1,18 @@
+---
+--- @author zsh in 2023/7/4 11:33
+---
+
+--env.AddPrefabPostInit("glommer", function(inst)
+--    if not TheWorld.ismastersim then
+--        return inst;
+--    end
+--    if inst.components.periodicspawner then
+--        local periodicspawner = inst.components.periodicspawner;
+--
+--        local old_onspawn = periodicspawner.onspawn;
+--        periodicspawner.onspawn = function(inst, fuel, ...)
+--
+--        end
+--
+--    end
+--end)
