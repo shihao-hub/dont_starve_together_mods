@@ -288,4 +288,7 @@ end
 -- must be imported
 env.modimport("new_modmain.lua")
 
+-- 2024-12-05-16:35 创建
+env.modimport("modmain2.lua")
+
 
