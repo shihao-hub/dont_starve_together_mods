@@ -4,12 +4,26 @@
 
 local L = (locale == "zh" or locale == "zht" or locale == "zhr") and true or false;
 
-local vars = {
-    --OPEN = L and "开启" or "Open"; -- 中英文意义不大...
-    --CLOSE = L and "关闭" or "Close";
-    OPEN = "开启";
-    CLOSE = "关闭";
-};
+local function _get_description(content)
+    local start_time = "2023-01-08"
+    -- 淘宝的云服务器卖家没有导入其他文件，所以那边 modinfo.lua 会导入失败。
+    local folder_name = folder_name or "workshop"
+
+    content = content or ""
+    return (L and "                                                  感谢你的订阅！\n"
+            .. content .. "\n"
+            .. "                                                【模组】：" .. folder_name .. "\n"
+            .. "                                                【作者】：" .. author .. "\n"
+            .. "                                                【版本】：" .. version .. "\n"
+            .. "                                                【时间】：" .. start_time .. "\n"
+            or "                                                Thanks for subscribing!\n"
+            .. content .. "\n"
+            .. "                                                【mod    】：" .. folder_name .. "\n"
+            .. "                                                【author 】：" .. author .. "\n"
+            .. "                                                【version】：" .. version .. "\n"
+            .. "                                                【release】：" .. start_time .. "\n"
+    )
+end
 
 local function option(description, data, hover)
     return {
@@ -19,23 +33,85 @@ local function option(description, data, hover)
     };
 end
 
+local function large_label(label)
+    return {
+        name = "",
+        label = label or "",
+        hover = "",
+        options = {
+            option("", 0)
+        },
+        default = 0
+    }
+end
+
+
+
+-- emoji.lua + emoji_items.lua
+local content = [[
+    󰀜󰀝󰀀󰀞󰀘󰀁󰀟󰀠󰀡󰀂
+    󰀃󰀄󰀢󰀅󰀣󰀆󰀇󰀈󰀤󰀙
+    󰀰󰀉󰀚󰀊󰀋󰀌󰀍󰀥󰀎󰀏
+    󰀦󰀐󰀑󰀒󰀧󰀱󰀨󰀓󰀔󰀩
+    󰀪󰀕󰀫󰀖󰀛󰀬󰀭󰀮󰀗󰀯
+
+    注意哈，这个模组还有个扩展包叫更多物品扩展包，模组编号：2928706576。
+    配合使用，效果更佳。部分新物品和优化性内容也会在那个模组里更新的。
+
+]]
+
+name = L and "更多物品" or "More Items"
+author = "心悦卿兮"
+version = "4.0.0"
+description = _get_description(content)
+
+server_filter_tags = L and { "更多物品" } or { "More Items" }
+
+client_only_mod = false
+all_clients_require_mod = true
+
+icon = "modicon.tex"
+icon_atlas = "modicon.xml"
+
+forumthread = ""
+api_version = 10
+priority = -2147483648
+
+dont_starve_compatible = false
+reign_of_giants_compatible = false
+dst_compatible = true
+
+-- 测试分支
+if folder_name ~= nil and not folder_name:find("2916137510") then
+    if folder_name:find("MoreItems") then
+        -- nothing
+    else
+        name = name .. "·测试版本"
+        --version = version .. ".beta" -- 不可改版本号，因为创意工坊网页检测不了...
+        icon = nil
+        icon_atlas = nil
+    end
+end
+
+configuration_options = {
+    large_label("------------------v2"),
+}
+
+------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+local vars = {
+    --OPEN = L and "开启" or "Open"; -- 中英文意义不大...
+    --CLOSE = L and "关闭" or "Close";
+    OPEN = "开启";
+    CLOSE = "关闭";
+};
+
 local fns = {
-    description = function(folder_name, author, version, start_time, content)
-        content = content or "";
-        return (L and "                                                  感谢你的订阅！\n"
-                .. content .. "\n"
-                .. "                                                【模组】：" .. folder_name .. "\n"
-                .. "                                                【作者】：" .. author .. "\n"
-                .. "                                                【版本】：" .. version .. "\n"
-                .. "                                                【时间】：" .. start_time .. "\n"
-                or "                                                Thanks for subscribing!\n"
-                .. content .. "\n"
-                .. "                                                【mod    】：" .. folder_name .. "\n"
-                .. "                                                【author 】：" .. author .. "\n"
-                .. "                                                【version】：" .. version .. "\n"
-                .. "                                                【release】：" .. start_time .. "\n"
-        );
-    end,
     largeLabel = function(label)
         return {
             name = "",
@@ -73,67 +149,6 @@ local fns = {
         }
     end
 };
-
-local __name = L and "更多物品" or "More Items";
-local __author = "心悦卿兮";
-local __version = "4.0.0";
-local __server_filter_tags = L and { "更多物品" } or { "More Items" };
-
-local start_time = "2023-01-08";
-local folder_name = folder_name or "workshop"; -- 淘宝的云服务器卖家没有导入其他文件，所以那边 modinfo.lua 会导入失败。
-local content = [[
-    󰀜󰀝󰀀󰀞󰀘󰀁󰀟󰀠󰀡󰀂
-    󰀃󰀄󰀢󰀅󰀣󰀆󰀇󰀈󰀤󰀙
-    󰀰󰀉󰀚󰀊󰀋󰀌󰀍󰀥󰀎󰀏
-    󰀦󰀐󰀑󰀒󰀧󰀱󰀨󰀓󰀔󰀩
-    󰀪󰀕󰀫󰀖󰀛󰀬󰀭󰀮󰀗󰀯
-
-    注意哈，这个模组还有个扩展包叫更多物品扩展包，模组编号：2928706576。
-    配合使用，效果更佳。部分新物品和优化性内容也会在那个模组里更新的。
-
-]]; -- emoji.lua + emoji_items.lua
-
-
-name = __name;
-author = __author;
-version = __version;
-description = fns.description(folder_name, author, version, start_time, content);
-
-server_filter_tags = __server_filter_tags;
-
-client_only_mod = false;
-all_clients_require_mod = true;
-
-icon = "modicon.tex";
-icon_atlas = "modicon.xml";
-
-forumthread = "";
-api_version = 10;
---priority = -2 ^ 62;
-priority = -2 ^ 31;
--- 避免 windows7 系统崩溃??? 不可能吧？浮点数咋溢出的
--- 不对啊，源码里表示 lua 里面的数字都是 double 类型啊，按照 IEEE 1 11 52 -> 最大值：(2-2^-52)*2^1023
-
-dont_starve_compatible = false;
-reign_of_giants_compatible = false;
-dst_compatible = true;
-
---priority = -9998; -- 因为五格装备栏，所以我需要比能力勋章加载快，唉！
-
--- 测试分支
-if not folder_name:find("2916137510") then
-    if folder_name:find("MoreItems") then
-        -- DoNothing
-
-        -- 我自己先测试一下。先比能力勋章加载快点，因为能力勋章比我加载慢的话，开了五格之后格子会超出...
-        --priority = -9998;
-    else
-        name = name .. "·测试版本";
-        --version = version .. ".beta"; -- 不可改版本号，因为创意工坊网页检测不了...
-        icon = nil;
-        icon_atlas = nil;
-    end
-end
 
 local OIM_ONE = "当检测到`部分`同样修改了该原版物品的模组时，此处将不再生效。";
 local OIM_TWO = "为了保证稳定性，如果开启了同类型模组，请关闭该选项啊！";
@@ -199,7 +214,8 @@ local function genericSgcCleanListOption(id)
     };
 end
 
-configuration_options = {
+local v1_configuration_options = {
+    fns.largeLabel("------------------v1"),
     --{
     --    name = "balance",
     --    label = "内容平衡",
@@ -1349,10 +1365,8 @@ configuration_options = {
     genericSgcCleanListOption(25);
 }
 
--- 等价于测试环境
-if _G then
-    local json = require("json")
-    print(json.encode(configuration_options))
+for i = 1, #configuration_options do
+    configuration_options[#configuration_options + 1] = v1_configuration_options[i]
 end
 
 -----------------------------------------------------------------------------------------------------------
