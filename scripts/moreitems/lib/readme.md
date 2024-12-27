@@ -1,7 +1,11 @@
 ```txt
     dkjson: https://github.com/LuaDist/dkjson
-    json: https://github.com/rxi/json.lua
     inspect: https://github.com/kikito/inspect.lua
+    json: https://github.com/rxi/json.lua
+    luafun: https://github.com/luafun/luafun
+    luatache:
+    middleclass: https://github.com/kikito/middleclass
+    
     stdlib: https://github.com/lua-stdlib/lua-stdlib
 ```
 
