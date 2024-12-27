@@ -5,9 +5,7 @@
 -- modmain.lua 和 modworldgenmain.lua 的 env 是同一个！
 
 
-if IsRail() then
-    error("Ban WeGame");
-end
+
 
 local API = require("chang_mone.dsts.API");
 
