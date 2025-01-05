@@ -105,6 +105,7 @@ end
 function module.time_block(runable)
     local res = -1
     xpcall(function()
+        -- try
         local socket = require("socket")
 
         local info = debug.getinfo(runable, "S")
@@ -120,8 +121,10 @@ function module.time_block(runable)
         }))
         res = elapsed_time
     end, function(msg)
+        -- catch
         log.error(msg)
     end)
+    -- finally
     return res
 end
 
