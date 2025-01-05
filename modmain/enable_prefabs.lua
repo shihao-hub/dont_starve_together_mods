@@ -59,6 +59,12 @@ end
 --end
 --TestPrefabs();
 
+-- 单身狗
+AddEnabledItem("mone_single_dog", function()
+    AddPrefabFiles(env, {
+        "mone/mine/single_dog"
+    });
+end);
 
 -- 渔网
 AddEnabledItem("fishingnet", function()
@@ -118,7 +124,6 @@ AddEnabledItem("bookstation", function()
         "mone/game/bookstation"
     });
 end);
-
 
 AddEnabledItem("wathgrithr_box", function()
     AddPrefabFiles(env, {

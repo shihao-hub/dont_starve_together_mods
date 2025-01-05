@@ -1,0 +1,12 @@
+---
+--- @author zsh in 2023/3/24 1:18
+---
+
+--for k, v in pairs(Ents) do
+--    if v and v.prefab=="" then
+--        v:Remove();
+--        break;
+--    end
+--end
+--
+--SpawnPrefab("").Transform:SetPosition(ThePlayer.Transform:GetWorldPosition());

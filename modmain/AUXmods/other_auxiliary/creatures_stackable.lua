@@ -126,7 +126,7 @@ end
 -- 尝试换一种方式实现该功能：关于岩浆虫卵和高脚鸟蛋的孵化问题
 ---- 注意此处函数的执行似乎非常靠前，因为此处崩溃我的本地模组会被全部禁用。
 ------ 找到原因了：Prefabs.lavae_egg、Prefabs.tallbirdegg 为空是因为需要调用 GLOBAL 里面的 Prefabs ...
-if false  then
+if false then
     env.AddSimPostInit(function(wilson)
         -- wilson 这个参数好像一直都是 nil。试了一次，打印出来确实是 nil
         ---- 2023-04-22：第一次用 AddSimPostInit 函数第一次进游戏卡住了，不知道什么情况。后续都正常了。

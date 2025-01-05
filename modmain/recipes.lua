@@ -4,6 +4,7 @@
 
 
 local API = require("chang_mone.dsts.API");
+local constants = require("more_items_constants")
 
 local config_data = TUNING.MONE_TUNING.GET_MOD_CONFIG_DATA;
 local BALANCE = TUNING.MONE_TUNING.GET_MOD_CONFIG_DATA.BALANCE;
@@ -1422,9 +1423,9 @@ Recipes[#Recipes + 1] = {
     CanMake = env.GetModConfigData("__mone_lifeinjector_vb"),
     name = "mone_lifeinjector_vb",
     ingredients = BALANCE and {
-        Ingredient("spoiled_food", 10) -- 20
+        Ingredient("spoiled_food", 10 * constants.LIFE_INJECTOR_VB__PER_ADD_NUM) -- 20
     } or {
-        Ingredient("spoiled_food", 5)
+        Ingredient("spoiled_food", 5 * constants.LIFE_INJECTOR_VB__PER_ADD_NUM)
     },
     tech = TECH.NONE,
     config = {
@@ -1446,9 +1447,9 @@ Recipes[#Recipes + 1] = {
     CanMake = env.GetModConfigData("__mone_lifeinjector_vb"),
     name = "mone_lifeinjector_vb_copy",
     ingredients = BALANCE and {
-        Ingredient("spoiled_food", 100)
+        Ingredient("spoiled_food", 100 * constants.LIFE_INJECTOR_VB__PER_ADD_NUM)
     } or {
-        Ingredient("spoiled_food", 50)
+        Ingredient("spoiled_food", 50 * constants.LIFE_INJECTOR_VB__PER_ADD_NUM)
     },
     tech = TECH.NONE,
     config = {
