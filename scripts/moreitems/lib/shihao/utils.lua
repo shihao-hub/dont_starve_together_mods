@@ -119,7 +119,9 @@ function module.time_block(runable)
             elapsed_time = elapsed_time
         }))
         res = elapsed_time
-    end, log.error)
+    end, function(msg)
+        log.error(msg)
+    end)
     return res
 end
 
