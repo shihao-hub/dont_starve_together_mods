@@ -9,7 +9,7 @@ local log = require("moreitems.lib.shihao.module.log")
 local checker = require("moreitems.lib.shihao.module.checker")
 
 local module = {
-    --base = base --【待定】
+    base = base
 }
 
 function module.switch(condition)
@@ -46,7 +46,7 @@ local function iter_varargs(process_each_element, ...)
     end
 end
 
-function module.all_null(...)
+function module.allof_null(...)
     local args = get_varargs(...)
     for i = 1, args.n do
         if args[i] ~= nil then

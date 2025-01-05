@@ -1,11 +1,13 @@
 local utils = require("moreitems.main").shihao.utils
 
+
 -- context, ctx, local, loc
 local internal = {
+    bool = utils.base.bool,
+
     invoke = utils.invoke,
-    bool = utils.bool,
     switch = utils.switch,
-    all_null = utils.all_null,
+    allof_null = utils.allof_null,
     oneof_null = utils.oneof_null,
 }
 
