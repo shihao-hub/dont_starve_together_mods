@@ -95,15 +95,15 @@ function module.invoke_safe(fn, ...)
     local n = select("#", ...)
     xpcall(function()
         res = fn(unpack(args, n))
-    end, function(err)
-        log.error(err)
-    end)
+    end, log.error)
     return res
 end
 
 ---打印某个函数的执行消耗时间
 ---@param runable function 没有返回值和没有参数的一个执行块，runable 的命名可以联想 Java
+---@return number 执行消耗的时间，-1 代表执行失败
 function module.time_block(runable)
+    local res = -1
     xpcall(function()
         local socket = require("socket")
 
@@ -112,12 +112,15 @@ function module.time_block(runable)
 
         runable()
 
+        local elapsed_time = socket.gettime() - start
         log.info(base.string_format("函数 [{{ source }}:{{ linedefined }}] 的执行耗时：{{ elapsed_time }} s", {
             source = tostring(info.source),
             linedefined = tostring(info.linedefined),
-            elapsed_time = socket.gettime() - start
+            elapsed_time = elapsed_time
         }))
+        res = elapsed_time
     end, log.error)
+    return res
 end
 
 if select('#', ...) == 0 then
