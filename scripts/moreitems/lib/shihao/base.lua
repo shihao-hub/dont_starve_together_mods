@@ -5,6 +5,7 @@
 
 local module = {}
 
+---将形如 {{ a }} {{ b }} 等格式的字符串全部替换为 tostring(a) 和 tostring(b)
 function module.string_format(str, context)
     return (string.gsub(str, "{{ ?([a-zA-Z_]+) ?}}", function(matched)
         return tostring(context[matched])
