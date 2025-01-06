@@ -8,9 +8,13 @@ local base = require("moreitems.lib.shihao.base")
 local log = require("moreitems.lib.shihao.module.log")
 local checker = require("moreitems.lib.shihao.module.checker")
 
-local module = {
-    base = base
-}
+local module = setmetatable({}, {
+    __index = function(t, k)
+        return base[k]
+    end
+})
+
+module.emojis = { "↑", "↓", "←", "→", "↖", "↗", "↘", "↙", "↕" }
 
 function module.switch(condition)
     --[[
@@ -34,20 +38,65 @@ function module.switch(condition)
     end
 end
 
+local function _do_nothing()
+
+end
+
+module.dummy = _do_nothing
+module.do_nothing = _do_nothing
+
+---@return string
+function module.get_call_location(level_incr)
+    --[[
+        -- debug.getinfo(thread, what), the below content refers to "what"
+        -- S: source, short_src, linedefined, lastlinedefined, what
+        -- l: currentline
+        -- u: nups
+        -- n: name, namewhat
+        -- L: activelines
+        -- f: func
+    ]]
+
+    -- level_incr, incr(增量)
+    level_incr = level_incr and level_incr or 0
+    -- It is better to provide a second param, because it can improve performance(改善性能). (maybe?)
+    -- but I think this is meaningless.
+    local info = debug.getinfo(2 + level_incr)
+    if info and info.short_src and info.currentline then
+        return (string.gsub(string.format("[file %s, line %s]", info.short_src, info.currentline), "\\", "/"))
+    end
+    return ""
+end
+
+---@param values table<any>
+---@return table<any,boolean>
+function module.generate_set(values)
+    local res = {}
+    for _, v in ipairs(values) do
+        res[v] = true
+    end
+    return res
+end
+
 -- Question: 如果 get_varargs 变成 public，岂不是在 utils 中出现了循环依赖？这种问题如何解决为好呢？
-local function get_varargs(...)
+-- Answer: 以下列方式可以解决，只要保证 _get_varargs 不要用到 module 中的方法即可
+local function _get_varargs(...)
     return { n = select("#", ...), ... }
 end
 
+function module.get_varargs(...)
+    return _get_varargs(...)
+end
+
 local function iter_varargs(process_each_element, ...)
-    local args = get_varargs(...)
+    local args = _get_varargs(...)
     for i = 1, args.n do
         process_each_element(args[i])
     end
 end
 
-function module.allof_null(...)
-    local args = get_varargs(...)
+function module.all_null(...)
+    local args = _get_varargs(...)
     for i = 1, args.n do
         if args[i] ~= nil then
             return false
@@ -57,7 +106,7 @@ function module.allof_null(...)
 end
 
 function module.oneof_null(...)
-    local args = get_varargs(...)
+    local args = _get_varargs(...)
     for i = 1, args.n do
         if args[i] == nil then
             return true
@@ -95,7 +144,9 @@ function module.invoke_safe(fn, ...)
     local n = select("#", ...)
     xpcall(function()
         res = fn(unpack(args, n))
-    end, log.error)
+    end, function(msg)
+        log.error(msg)
+    end)
     return res
 end
 
@@ -109,7 +160,7 @@ function module.time_block(runable)
         local socket = require("socket")
 
         local info = debug.getinfo(runable, "S")
-        local start = socket.gettime()
+        local start = socket.gettime() -- os.time() 是时间戳，单位是秒，os.clock() 只统计 cpu。所以选择用 socket.gettime()
 
         runable()
 
@@ -125,13 +176,32 @@ function module.time_block(runable)
         log.error(msg)
     end)
     -- finally
+    local finally = function()
+
+    end
+    finally()
+
     return res
+end
+
+function module.if_present(value, consumer_action)
+    if value ~= nil then
+        consumer_action(value)
+    end
+end
+
+function module.if_present_or_else(value, consumer_action, empty_action)
+    if value ~= nil then
+        consumer_action(value)
+    else
+        empty_action()
+    end
 end
 
 if select('#', ...) == 0 then
     --print(inspect.inspect(module.get_module_env(), { depth = 2 }))
 
-    print(module.invoke(function(a, b)
+    log.info(module.invoke(function(a, b)
         return a + b
     end, 1, 2))
 
@@ -141,6 +211,17 @@ if select('#', ...) == 0 then
             --log.info("hello world")
         end
     end))
+    log.info(math.huge)
+    log.info(0 / 0)
+    log.info(math.sqrt(-1))
+
+    log.info(module.string_format("{{ name         }}", { name = "zsh" }))
+    log.info(module.string_format2("{{name        }}", { name = "zsh" }))
+
+    log.info(os.time())
+    log.info(os.clock())
+
+    log.info(module.get_call_location())
 end
 
 return module

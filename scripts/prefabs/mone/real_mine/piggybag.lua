@@ -2,21 +2,13 @@
 --- @author zsh in 2023/1/16 20:43
 ---
 
-local internal = {}
+local utils = require("moreitems.main").shihao.utils
+local dst_service = require("moreitems.main").dst.dst_service
 
-function internal.if_present(value, consumer_action)
-    if value ~= nil then
-        consumer_action(value)
-    end
-end
-
-function internal.if_present_or_else(value, consumer_action, empty_action)
-    if value ~= nil then
-        consumer_action(value)
-    else
-        empty_action()
-    end
-end
+local internal = {
+    if_present = utils.if_present,
+    if_present_or_else = utils.if_present_or_else
+}
 
 ------------------------------------------------------------------------------------------------------------------------
 local change_image_enable = true
@@ -99,15 +91,15 @@ local function ondroppedfn(inst)
     if inst.components.container then
         inst.components.container:Close()
     end
-    -- chang
-    if inst.components.container then
-        local old_slots = inst.components.container.slots
+
+    utils.if_present(inst.components.container, function(container)
+        local old_slots = container.slots
         for _, v in pairs(old_slots) do
             if v.components.container and v.components.container:IsOpen() then
                 v.components.container:Close()
             end
         end
-    end
+    end)
 end
 
 local function onopenfn(inst, data)
@@ -118,50 +110,39 @@ end
 
 local function onclosefn(inst, data)
     inst.SoundEmitter:PlaySound("dontstarve/wilson/chest_close")
-    -- chang
-    if inst.components.container then
-        local old_slots = inst.components.container.slots
+
+    utils.if_present(inst.components.container, function(container)
+        local old_slots = container.slots
         for _, v in pairs(old_slots) do
             if v.components.container and v.components.container:IsOpen() then
                 v.components.container:Close()
             end
         end
-    end
+    end)
 end
 
 local function tool_bag_auto_open__onitemget(inst, data)
     local item = data and data.item;
-    if item and item.prefab == "mone_tool_bag" then
-        if not item.components.container:IsOpen() then
-            local owner = inst.components.inventoryitem:GetGrandOwner();
-            if owner and owner:HasTag("player") then
-                item.components.container:Open(owner);
-            end
+    if item == nil or item.prefab ~= "mone_tool_bag" then
+        return
+    end
+    if not item.components.container:IsOpen() then
+        local owner = inst.components.inventoryitem:GetGrandOwner();
+        if owner and owner:HasTag("player") then
+            item.components.container:Open(owner);
         end
     end
 end
 
 local function storage_bag_auto_open__onitemget(inst, data)
     local item = data and data.item;
-    if item and item.prefab == "mone_storage_bag" then
-        if not item.components.container:IsOpen() then
-            local owner = inst.components.inventoryitem:GetGrandOwner();
-            if owner and owner:HasTag("player") then
-                item.components.container:Open(owner);
-            end
-        end
+    if item == nil or item.prefab ~= "mone_storage_bag" then
+        return
     end
-end
-
-local function SetEntityReplicated(inst, widgetsetup_params)
-    local old_OnEntityReplicated = inst.OnEntityReplicated
-
-    inst.OnEntityReplicated = function(inst)
-        if old_OnEntityReplicated then
-            old_OnEntityReplicated(inst)
-        end
-        if inst and inst.replica and inst.replica.container then
-            inst.replica.container:WidgetSetup(widgetsetup_params[1])
+    if not item.components.container:IsOpen() then
+        local owner = inst.components.inventoryitem:GetGrandOwner();
+        if owner ~= nil and owner:HasTag("player") then
+            item.components.container:Open(owner);
         end
     end
 end
@@ -198,7 +179,7 @@ local function fn()
     inst.entity:SetPristine()
 
     if not TheWorld.ismastersim then
-        SetEntityReplicated(inst, { "mone_piggybag" })
+        dst_service.SetOnEntityReplicated(inst, "mone_piggybag")
         return inst
     end
 
@@ -207,10 +188,9 @@ local function fn()
     inst:AddComponent("inventoryitem")
 
     if change_image_enable then
-        inst.components.inventoryitem:ChangeImageName("piggyback")
+        dst_service.inventoryitem__set_imagename(inst, "piggyback")
     else
-        inst.components.inventoryitem.imagename = "mone_piggybag"
-        inst.components.inventoryitem.atlasname = "images/inventoryimages/mone_piggybag.xml"
+        dst_service.inventoryitem__set_imagename(inst, "mone_piggybag", "images/inventoryimages/mone_piggybag.xml")
     end
 
     inst.components.inventoryitem.canonlygoinpocket = true

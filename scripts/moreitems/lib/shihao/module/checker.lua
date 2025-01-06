@@ -1,3 +1,5 @@
+local base = require("moreitems.lib.shihao.base")
+
 local module = {}
 
 ---@param value any
@@ -15,6 +17,17 @@ end
 
 function module.check_function(value)
     _check_template_method(value, "function")
+end
+
+function module.require_not_nil(value, message)
+    message = base.ternary_operator(message, message, "Expected " .. "not nil" .. ", got " .. "nil")
+    if value == nil then
+        error(message)
+    end
+end
+
+if select('#', ...) == 0 then
+
 end
 
 return module

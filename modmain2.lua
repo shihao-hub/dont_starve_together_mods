@@ -2,7 +2,7 @@
 --- DateTime: 2024/12/5 16:35
 ---
 
-local dst = require("moreitems.main").dst
+local dst = require("moreitems.main").dst.class.DSTUtils
 
 local dst_utils = dst.DSTUtils(env)
 
