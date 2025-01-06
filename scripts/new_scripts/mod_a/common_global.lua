@@ -18,6 +18,28 @@ if morel_BRANCH == "dev" then
     package.path = package.path .. ";D:\\programming_ablility\\ProgrammingLanguages\\LUA\\Lua\\5.1\\lua\\?.lua"
 end
 
+if false then
+    local stl = require("moreitems.main").shihao.stl
+    local base = require("moreitems.main").shihao.base
+    local utils = require("moreitems.main").shihao.utils
+
+    morel_is_nil = base.is_nil
+    morel_is_boolean = base.is_boolean
+    morel_is_number = base.is_number
+    morel_is_string = base.is_string
+    morel_is_table = base.is_table
+    morel_is_function = base.is_function
+    morel_is_thread = base.is_thread
+    morel_is_userdata = base.is_userdata
+
+    morel_dummy = utils.dummy
+    morel_do_nothing = utils.do_nothing
+
+    morel_get_call_on_position = utils.get_call_location
+    morel_contains_key = stl.table.contains_key
+    morel_contains_value = stl.table.contains_value
+end
+
 -----------------------------------------------------------------------------
 -- only depends on lua
 -----------------------------------------------------------------------------
