@@ -7,7 +7,7 @@ local internal = {
 
     invoke = utils.invoke,
     switch = utils.switch,
-    allof_null = utils.allof_null,
+    all_null = utils.all_null,
     oneof_null = utils.oneof_null,
 }
 
