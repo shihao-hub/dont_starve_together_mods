@@ -1,3 +1,5 @@
 return {
-    table = require("moreitems.lib.shihao.stl.table")
+    debug = require("moreitems.lib.shihao.stl.debug"),
+    string = require("moreitems.lib.shihao.stl.string"),
+    table = require("moreitems.lib.shihao.stl.table"),
 }

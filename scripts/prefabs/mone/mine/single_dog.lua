@@ -1,12 +1,13 @@
+local base = require("moreitems.main").shihao.base
 local utils = require("moreitems.main").shihao.utils
 
 
 -- context, ctx, local, loc
 local internal = {
-    bool = utils.base.bool,
+    bool = base.bool,
+    switch = base.switch,
 
     invoke = utils.invoke,
-    switch = utils.switch,
     all_null = utils.all_null,
     oneof_null = utils.oneof_null,
 }
@@ -23,19 +24,19 @@ local metadata = {
 }
 
 local function onhammered(inst, worker)
-    if inst.components.lootdropper then
-        inst.components.lootdropper:DropLoot()
-    end
+    utils.if_present(inst.components.lootdropper, function(lootdropper)
+        lootdropper:DropLoot()
+    end)
 
     local x, y, z = inst.Transform:GetWorldPosition()
-    if x and y and z then
+    utils.if_present(x and y and z, function()
         local fx = SpawnPrefab("collapse_small")
         if fx then
             fx.Transform:SetPosition(x, y, z)
             fx:SetMaterial("wood")
         end
         inst:Remove()
-    end
+    end)
 end
 
 -- 这里的 invoke 体现的也是一种封装思想

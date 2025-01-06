@@ -6,5 +6,7 @@ return {
     stl = require("moreitems.lib.shihao.stl.__init__"),
 
     base = require("moreitems.lib.shihao.base"),
+    mini_utils = require("moreitems.lib.shihao.mini_utils"),
     utils = require("moreitems.lib.shihao.utils"),
+    warnings = require("moreitems.lib.shihao.warnings"),
 }

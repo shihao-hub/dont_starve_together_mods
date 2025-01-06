@@ -4,7 +4,9 @@
 
 local lustache = require("moreitems.lib.thirdparty.lustache.lustache")
 
-local module = {}
+local module = {
+
+}
 
 ---将形如 {{ a }} {{ b }} 等格式的字符串全部替换为 tostring(a) 和 tostring(b)
 function module.string_format(str, context)
@@ -34,6 +36,37 @@ function module.ternary_operator(condition, expression1, expression2)
         return expression1
     end
     return expression2
+end
+
+function module.switch(condition)
+    --[[
+        形如 jdk17：
+        return switch(week) {
+            case null -> 1;
+            case MONDAY -> 2;
+            case TUESDAY -> 3;
+            default -> 4;
+        };
+        Lua switch 可以这样使用：
+
+    ]]
+    -- 2025-01-06：因为要将 switch 移动到 base 内，但是 base 不允许依赖其他库，因此选择将 checker.check_function 内联
+    local function check_function(value)
+        local _type = "function"
+        if type(value) == _type then
+            return
+        end
+        error("Expected " .. _type .. ", got " .. type(value))
+    end
+
+    return function(t)
+        local branch = t[condition]
+        if branch == nil then
+            branch = function() end
+        end
+        check_function(branch)
+        return branch()
+    end
 end
 
 function module.is_nil(v)

@@ -5,38 +5,26 @@
 -- 【待定】其实在我看来，utils 可以囊括所有内容了... 不需要那么多文件，我的模组根本用不到，一把梭即可
 
 local base = require("moreitems.lib.shihao.base")
+local mini_utils = require("moreitems.lib.shihao.mini_utils")
 local log = require("moreitems.lib.shihao.module.log")
 local checker = require("moreitems.lib.shihao.module.checker")
+local stl_debug = require("moreitems.lib.shihao.stl.debug")
+local guards = require("moreitems.lib.shihao.module.guards")
 
+-- NOTE: 曾经 setmetatable({}, { __index = function(t, k) return base[k] end })，但是这是副作用，因此我选择避免
 local module = setmetatable({}, {
     __index = function(t, k)
-        return base[k]
+        return mini_utils[k]
     end
 })
 
-module.emojis = { "↑", "↓", "←", "→", "↖", "↗", "↘", "↙", "↕" }
+--module.emojis = { "↑", "↓", "←", "→", "↖", "↗", "↘", "↙", "↕" }
 
-function module.switch(condition)
-    --[[
-        形如 jdk17：
-        return switch(week) {
-            case null -> 1;
-            case MONDAY -> 2;
-            case TUESDAY -> 3;
-            default -> 4;
-        };
-        Lua switch 可以这样使用：
-
-    ]]
-    return function(t)
-        local branch = t[condition]
-        if branch == nil then
-            branch = function() end
-        end
-        checker.check_function(branch)
-        return branch()
-    end
-end
+-- Legacy compatibility: 运用重构将相关位置替换后，就会注释掉。这就是重构的魅力，改错！
+--module.get_call_location = stl_debug.get_call_location
+--module.switch = base.switch
+module.if_present = guards.if_present
+module.if_present_or_else = guards.if_present_or_else
 
 local function _do_nothing()
 
@@ -44,29 +32,6 @@ end
 
 module.dummy = _do_nothing
 module.do_nothing = _do_nothing
-
----@return string
-function module.get_call_location(level_incr)
-    --[[
-        -- debug.getinfo(thread, what), the below content refers to "what"
-        -- S: source, short_src, linedefined, lastlinedefined, what
-        -- l: currentline
-        -- u: nups
-        -- n: name, namewhat
-        -- L: activelines
-        -- f: func
-    ]]
-
-    -- level_incr, incr(增量)
-    level_incr = level_incr and level_incr or 0
-    -- It is better to provide a second param, because it can improve performance(改善性能). (maybe?)
-    -- but I think this is meaningless.
-    local info = debug.getinfo(2 + level_incr)
-    if info and info.short_src and info.currentline then
-        return (string.gsub(string.format("[file %s, line %s]", info.short_src, info.currentline), "\\", "/"))
-    end
-    return ""
-end
 
 ---@param values table<any>
 ---@return table<any,boolean>
@@ -113,6 +78,12 @@ function module.oneof_null(...)
         end
     end
     return false
+end
+
+---@param old function 原函数
+---@param generate_present_fn fun(old:function) 生成现函数的函数
+function module.hook(old, generate_present_fn)
+    return generate_present_fn(old)
 end
 
 -------------------------------------------------------------------------------
@@ -184,20 +155,6 @@ function module.time_block(runable)
     return res
 end
 
-function module.if_present(value, consumer_action)
-    if value ~= nil then
-        consumer_action(value)
-    end
-end
-
-function module.if_present_or_else(value, consumer_action, empty_action)
-    if value ~= nil then
-        consumer_action(value)
-    else
-        empty_action()
-    end
-end
-
 if select('#', ...) == 0 then
     --print(inspect.inspect(module.get_module_env(), { depth = 2 }))
 
@@ -221,7 +178,6 @@ if select('#', ...) == 0 then
     log.info(os.time())
     log.info(os.clock())
 
-    log.info(module.get_call_location())
 end
 
 return module

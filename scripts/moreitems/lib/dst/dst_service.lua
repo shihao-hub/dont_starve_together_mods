@@ -2,6 +2,9 @@
 --- DateTime: 2025/1/6 18:50
 ---
 
+-- dst service logic utils
+-- 即此处的函数与业务逻辑强相关，比如和 prefab fn 强相关
+
 local log = require("moreitems.lib.shihao.module.log")
 local base = require("moreitems.lib.shihao.base")
 
@@ -45,6 +48,7 @@ end
 
 ---@param atlasname string|nil atlasname == nil 时，将调用 ChangeImageName 方法
 function module.inventoryitem__set_imagename(inst, imagename, atlasname)
+    -- inventoryitem__set_imagename, __ 作为命名空间分隔符，说实话我挺喜欢这样的，但是似乎不符合规范呢，可能是项目太小
     if atlasname == nil then
         inst.components.inventoryitem:ChangeImageName(imagename)
         return
