@@ -5,15 +5,13 @@
 -- 【待定】其实在我看来，utils 可以囊括所有内容了... 不需要那么多文件，我的模组根本用不到，一把梭即可
 
 local base = require("moreitems.lib.shihao.base")
-local mini_utils = require("moreitems.lib.shihao.mini_utils")
 local log = require("moreitems.lib.shihao.module.log")
-local checker = require("moreitems.lib.shihao.module.checker")
-local stl_debug = require("moreitems.lib.shihao.stl.debug")
 local guards = require("moreitems.lib.shihao.module.guards")
 
 -- NOTE: 曾经 setmetatable({}, { __index = function(t, k) return base[k] end })，但是这是副作用，因此我选择避免
 local module = setmetatable({}, {
     __index = function(t, k)
+        local mini_utils = require("moreitems.lib.shihao.mini_utils")
         return mini_utils[k]
     end
 })
@@ -78,12 +76,6 @@ function module.oneof_null(...)
         end
     end
     return false
-end
-
----@param old function 原函数
----@param generate_present_fn fun(old:function) 生成现函数的函数
-function module.hook(old, generate_present_fn)
-    return generate_present_fn(old)
 end
 
 -------------------------------------------------------------------------------
@@ -155,28 +147,34 @@ function module.time_block(runable)
     return res
 end
 
+-- NOTE: 刚刚突然意识到一个问题，为什么要 require 都放在文件开头呢？除了必要的一些常用模块，不常用的模块我直接在函数中引用不好吗？封装性强还能避免循环依赖。
+function module.namedtuple(fields)
+    local NamedTuple = require("moreitems.lib.shihao.class.NamedTuple")
+end
+
 if select('#', ...) == 0 then
-    --print(inspect.inspect(module.get_module_env(), { depth = 2 }))
 
-    log.info(module.invoke(function(a, b)
-        return a + b
-    end, 1, 2))
+    local function test()
+        --print(inspect.inspect(module.get_module_env(), { depth = 2 }))
 
-    log.info(base.string_format("{{ a }}", { a = "a" }))
-    log.info(module.time_block(function()
-        for _ = 1, 1000 do
-            --log.info("hello world")
-        end
-    end))
-    log.info(math.huge)
-    log.info(0 / 0)
-    log.info(math.sqrt(-1))
+        log.info(module.invoke(function(a, b)
+            return a + b
+        end, 1, 2))
 
-    log.info(module.string_format("{{ name         }}", { name = "zsh" }))
-    log.info(module.string_format2("{{name        }}", { name = "zsh" }))
+        log.info(base.string_format("{{ a }}", { a = "a" }))
+        log.info(module.time_block(function()
+            for _ = 1, 1000 do
+                --log.info("hello world")
+            end
+        end))
+        log.info(math.huge)
+        log.info(0 / 0)
+        log.info(math.sqrt(-1))
 
-    log.info(os.time())
-    log.info(os.clock())
+        log.info(os.time())
+        log.info(os.clock())
+    end
+    --test()
 
 end
 
