@@ -144,6 +144,20 @@ local function more_items_instruction_book()
             inst.components.inventory.ignoresound = false
         end
     end
+
+    local dst_utils = require("moreitems.main").dst.dst_utils
+
+    local function on_ms_playerspawn(inst, player)
+        player.OnNewSpawn = dst_utils.hook_fn(player.OnNewSpawn, function(old_fn)
+            return function(inst, starting_item_skins)
+                give_player_starting_items(inst, { "more_items_instruction_book" })
+                if old_fn then
+                    return old_fn(inst, starting_item_skins)
+                end
+            end
+        end)
+    end
+
     env.AddPrefabPostInit("world", function(inst)
         if not TheWorld.ismastersim then
             return inst;
