@@ -1,3 +1,4 @@
+### 第三方 Lua 库
 ```txt
     dkjson: https://github.com/LuaDist/dkjson
     inspect: https://github.com/kikito/inspect.lua
@@ -8,7 +9,7 @@
     
     stdlib: https://github.com/lua-stdlib/lua-stdlib
 ```
-
+#### Lua 库简单介绍
 1. json 不可以解析稀疏数组（invalid table: sparse array），dkjson 可以解析
 2. inspect 可以类比 python 的 pprint，可以打印出结构化的数据
 3. json 可以解析稀疏数组，但是解析出来是 nil，所以需要用 dkjson
