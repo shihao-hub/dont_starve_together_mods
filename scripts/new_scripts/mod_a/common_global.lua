@@ -19,7 +19,7 @@ if morel_BRANCH == "dev" then
 end
 
 if false then
-    local stl = require("moreitems.main").shihao.stl
+    local stl = require("moreitems.main").shihao.module.stl
     local base = require("moreitems.main").shihao.base
     local utils = require("moreitems.main").shihao.utils
 
@@ -35,7 +35,7 @@ if false then
     morel_dummy = utils.dummy
     morel_do_nothing = utils.do_nothing
 
-    morel_get_call_on_position = utils.get_call_location
+    morel_get_call_on_position = stl.debug.get_call_location
     morel_contains_key = stl.table.contains_key
     morel_contains_value = stl.table.contains_value
 end
