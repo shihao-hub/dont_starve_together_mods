@@ -2,7 +2,10 @@
 --- DateTime: 2025/1/6 15:47
 ---
 
+local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
 
+local base = require("moreitems.lib.shihao.base")
+local log = base.log
 
 local module = {}
 local cache = {}
@@ -61,27 +64,104 @@ function module.oneof_mod_enabled(...)
     return false
 end
 
-if select("#", ...) == 0 then
-    local luafun = require("moreitems.lib.thirdparty.luafun.fun")
-    local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
+local function _generate_hook_fn()
+    local cache = {}
 
-    local utils = require("moreitems.lib.shihao.utils")
+    ---@param old_fn function 原函数
+    ---@param generate_present_fn fun(old_fn:function) 生成现函数的函数
+    ---@param unique_key string 唯一键值对
+    local function hook_fn(old_fn, generate_present_fn, unique_key)
+        local function Local()
+            local obj = {}
 
-    local t = { 1, 2, nil, 2, 3, nil, nil, nil, 4, a = 1, b = 2 }
-    local iter_t = luafun.iter(t)
-    for i, v in luafun.iter(iter_t) do
-        print(i, v)
+            function obj.generate_unique_key(old_fn, unique_key)
+                if not base.is_function(old_fn) then
+                    return unique_key
+                end
+                -- 需要以 old_fn 为键来缓存
+                return tostring(old_fn):sub(11, -1) .. "|" .. unique_key
+            end
+
+            return obj
+        end
+        local loc = Local()
+
+        unique_key = loc.generate_unique_key(old_fn, unique_key)
+
+        if unique_key == nil then
+            return generate_present_fn(old_fn)
+        end
+        if cache[unique_key] == nil then
+            cache[unique_key] = generate_present_fn(old_fn)
+            log.info(base.string_format("cache misses, cached data: `{{key}} -> {{value}}`", { key = unique_key, value = cache[unique_key] }))
+        else
+            log.info(base.string_format("cached data: `{{key}} -> {{value}}`", { key = unique_key, value = cache[unique_key] }))
+        end
+        return cache[unique_key]
     end
-    print(inspect.inspect(luafun.totable(luafun.filter(function(e) return e >= 2 end, luafun.iter(t)))))
-    print(inspect.inspect(luafun.tomap(luafun.filter(function(e) return e >= 2 end, luafun.iter(t)))))
-    print(inspect.inspect(luafun.tomap(luafun.iter({ 1, 2 }))))
 
-    --print(luafun.totable(luafun.iter({ 1, 2, 3, 4, 5 })))
-    --for i, v in pairs(luafun.totable(luafun.iter({ 1, 2, 3, 4, 5 }))) do
-    --    print(i, v)
-    --end
-    --print(inspect.inspect(luafun.totable(luafun.iter({ 1, 2, 3, 4, 5 }))))
+    return hook_fn
+end
 
+--[[---@param old_fn function 原函数
+---@param generate_present_fn fun(old_fn:function) 生成现函数的函数
+function module.hook(old_fn, generate_present_fn)
+    return generate_present_fn(old_fn)
+end]]
+module.hook_fn = _generate_hook_fn()
+
+if select("#", ...) == 0 then
+
+    local assertion = require("moreitems.lib.shihao.module.assertion")
+    --[[ hook ]]
+    xpcall(function()
+        local fn1 = function() end
+        local new_fn1_1 = function() end
+        local new_fn1_2 = function() end
+        local new_fn1_3 = function() end
+        print("      fn1:", fn1)
+        print("new_fn1_1:", new_fn1_1)
+        print("new_fn1_2:", new_fn1_2)
+        print("new_fn1_3:", new_fn1_3)
+        local _new_fn1_1 = module.hook_fn(fn1, function(old_fn)
+            return new_fn1_1
+        end, "fn1")
+
+        local _new_fn1_2 = module.hook_fn(fn1, function(old_fn)
+            return new_fn1_2
+        end, "fn1")
+
+        local _new_fn1_3 = module.hook_fn(fn1, function(old_fn)
+            return new_fn1_3
+        end, "fn1_")
+
+        assertion.assert_true(new_fn1_1 == _new_fn1_1)
+        assertion.assert_true(new_fn1_1 == _new_fn1_2)
+        assertion.assert_true(new_fn1_1 == _new_fn1_3)
+    end, print)
+
+    local function test()
+        local luafun = require("moreitems.lib.thirdparty.luafun.fun")
+        local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
+
+        local utils = require("moreitems.lib.shihao.utils")
+
+        local t = { 1, 2, nil, 2, 3, nil, nil, nil, 4, a = 1, b = 2 }
+        local iter_t = luafun.iter(t)
+        for i, v in luafun.iter(iter_t) do
+            print(i, v)
+        end
+        print(inspect.inspect(luafun.totable(luafun.filter(function(e) return e >= 2 end, luafun.iter(t)))))
+        print(inspect.inspect(luafun.tomap(luafun.filter(function(e) return e >= 2 end, luafun.iter(t)))))
+        print(inspect.inspect(luafun.tomap(luafun.iter({ 1, 2 }))))
+
+        --print(luafun.totable(luafun.iter({ 1, 2, 3, 4, 5 })))
+        --for i, v in pairs(luafun.totable(luafun.iter({ 1, 2, 3, 4, 5 }))) do
+        --    print(i, v)
+        --end
+        --print(inspect.inspect(luafun.totable(luafun.iter({ 1, 2, 3, 4, 5 }))))
+    end
+    --test()
 
 end
 
