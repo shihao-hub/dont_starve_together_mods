@@ -15,17 +15,16 @@ local function _persistent(data)
     log.info("persistent")
 end
 
+-- 虽然构造函数中似乎不建议调用类似 self:fn 的操作，但是这也没办法呀，必须要提出去呀...
 local function _modify_instance_metatable(instance)
-    local data = inspect.counter
-    local mt = getmetatable(instance)
+    local self = instance
+    local mt = getmetatable(self)
     guards.if_present(mt, function()
-        log.info(inspect.inspect(instance))
-        log.info(mt)
-        log.info(mt.__index)
-        mt.__index = utils.hook(mt.__index, function(old)
+        -- mt == mt.__index
+        mt.__index = utils.hook(mt.__index, function(old_fn)
             return function(t, k)
-                local res = old(t, k)
-                _persistent(data)
+                local res = old_fn(t, k)
+                _persistent(self.counter)
                 return res
             end
         end)
@@ -92,7 +91,7 @@ end
 
 if select("#", ...) == 0 then
     local luafun = require("moreitems.lib.thirdparty.luafun.fun")
-    local stl_debug = require("moreitems.lib.shihao.stl.debug")
+    local stl_debug = require("moreitems.lib.shihao.module.stl.debug")
     local counter = CallCounter()
     --counter:incr(stl_debug.get_call_location() .. ":unknown")
     for i in luafun.range(10) do
