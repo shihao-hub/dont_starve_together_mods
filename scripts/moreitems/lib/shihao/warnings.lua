@@ -2,6 +2,7 @@
 
 local log = require("moreitems.lib.shihao.module.log")
 local base = require("moreitems.lib.shihao.base")
+local stl_debug = require("moreitems.lib.shihao.module.stl.debug")
 
 local module = {}
 local static = {
@@ -13,7 +14,7 @@ function module.warn(msg)
         return
     end
     log.warning(base.string_format("{{ call_location }}: warnings.warn(\"{{ msg }}\")", {
-        call_location = utils.get_call_location(),
+        call_location = stl_debug.get_call_location(),
         msg = msg,
     }))
 end
