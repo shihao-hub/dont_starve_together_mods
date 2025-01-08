@@ -2,7 +2,7 @@
 
 local log = require("moreitems.lib.shihao.module.log")
 local base = require("moreitems.lib.shihao.base")
-local stl_debug = require("moreitems.lib.shihao.module.stl.debug")
+local stl_debug = require("moreitems.lib.shihao.module.stl_debug")
 
 local module = {}
 local static = {

@@ -15,7 +15,6 @@ local function _check_args_for_array_equals(array1, array2)
     -- 校验参数类型在静态语言不需要，动态语言如果不校验，会导致 bug 和错误发生点相隔太远
 end
 
----@return boolean,number|nil
 local function array_equals(array1, array2)
     _check_args_for_array_equals(array1, array2)
 
@@ -164,6 +163,7 @@ local function _assertion(debug_flag)
     return module
 end
 
+-- TODO: 这个 _assertion 这样还是有问题的，按道理应该可以将其再往上层移动一下
 return {
     -- NOTE: 此处的模块放入 base.assertion 中其实挺好的。base.lua 一个文件还是太少了。built-in 多个文件比较好。【慢慢完善吧，重构+设计】
     assertion = _assertion(settings.TEST_ENABLED),

@@ -91,7 +91,7 @@ end
 
 if select("#", ...) == 0 then
     local luafun = require("moreitems.lib.thirdparty.luafun.fun")
-    local stl_debug = require("moreitems.lib.shihao.module.stl.debug")
+    local stl_debug = require("moreitems.lib.shihao.module.stl_debug")
     local counter = CallCounter()
     --counter:incr(stl_debug.get_call_location() .. ":unknown")
     for i in luafun.range(10) do

@@ -1,4 +1,4 @@
-local checker = require("moreitems.main").shihao.checker
+local checker = require("moreitems.main").shihao.module.checker
 
 ------------------------------------------------------------------------------------------------------------------------
 

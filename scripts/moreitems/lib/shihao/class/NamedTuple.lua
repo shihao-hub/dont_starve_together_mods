@@ -7,7 +7,7 @@ local luafun = require("moreitems.lib.thirdparty.luafun.fun")
 local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
 
 local base = require("moreitems.lib.shihao.base")
-local stl_string = require("moreitems.lib.shihao.module.stl.string")
+local stl_string = require("moreitems.lib.shihao.module.stl_string")
 
 -- 主要，这个 middleclass 隐藏了太多东西，这导致有些事情我做不了啊。只能把代码看一下才行。
 -- 稍微看来一下，似乎确实比 Lua 官方书中的那种定义方式好一点，比如 aClass.__instanceDict 和 aClass.__declaredMethods

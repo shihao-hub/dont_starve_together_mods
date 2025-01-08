@@ -5,7 +5,6 @@
 local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
 
 local module_shared = require("moreitems.lib.shihao.module.__shared__")
-local stl_shared = require("moreitems.lib.shihao.module.stl.__shared__")
 
 local module = {}
 
@@ -39,7 +38,7 @@ if select("#", ...) == 0 then
         for _, case in ipairs(test_cases) do
             assertion.assert_true()
         end
-    end,print)
+    end, print)
 
     --[[ startswith ]]
     xpcall(function()
