@@ -7,6 +7,7 @@ local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
 
 local function _log(debug_flag)
     local module = {}
+    local static = { console = print }
 
     ---将可变参数全部转为 string 并拼接后返回
     local function _convert_to_message(...)
@@ -47,7 +48,24 @@ local function _log(debug_flag)
 
     ---@param level string
     local function _log_by_level(level, ...)
-        print(_prefix(level) .. _convert_to_message(...))
+        static.console(_prefix(level) .. _convert_to_message(...))
+    end
+
+    function module.set_console(console, flush)
+        local function _check_args()
+            if type(console) == "function" and type(flush) == "function" then
+                return
+            end
+            error(string.format("Expected console(function) and flush(function), got console(%s) and flush(%s)", type(console), type(flush)))
+        end
+        _check_args()
+
+        static.console = console
+        module.flush = flush
+    end
+
+    function module.flush()
+        io.stdout:flush()
     end
 
     function module.debug(...)
@@ -68,7 +86,7 @@ local function _log(debug_flag)
         -- 不要用 io.stderr，因为没有缓存，会优先打印出来，即使我执行了 io.stdout:flush 也没有用
         --io.stdout:flush()
         --io.stderr:write(debug.traceback(), "\n")
-        print(debug.traceback())
+        static.console(debug.traceback())
     end
 
     if debug_flag then
