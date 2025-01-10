@@ -1,3 +1,3 @@
 -- 委托，这是最初的文件，已经被大范围依赖了。后续可以直接使用 builtin，此处依旧保留，因为依赖过多，重构麻烦
 -- Question: 为什么 emmylua 插件对于 require 文件不存在的情况不报错呢？尤其这种当前目录的文件！可能不好实现吧...
-return require("moreitems.lib.shihao.builtin")
+return require("moreitems.lib.shihao._builtin")

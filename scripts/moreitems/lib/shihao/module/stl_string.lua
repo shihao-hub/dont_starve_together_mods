@@ -4,7 +4,7 @@
 
 local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
 
-local module_shared = require("moreitems.lib.shihao.module.__shared__")
+local shared = require("moreitems.lib.shihao.module.__shared__")
 
 local module = {}
 
@@ -28,7 +28,7 @@ function module.endswith(str, suffix)
 end
 
 if select("#", ...) == 0 then
-    local assertion = module_shared.assertion
+    local assertion = shared.assertion
 
     --[[ split ]]
     xpcall(function()
