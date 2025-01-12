@@ -2,7 +2,7 @@
 --- DateTime: 2025/1/6 16:27
 ---
 
-local module_shared = require("moreitems.lib.shihao.module.__shared__")
+local _shared = require("moreitems.lib.shihao.module.__shared__")
 
 local module = {}
 
@@ -29,7 +29,9 @@ end
 --
 --end
 
-module.array_equals = module_shared.array_equals
+function module.array_equals(array1, array2)
+    return _shared.array_equals(array1, array2)
+end
 
 if select("#", ...) == 0 then
 

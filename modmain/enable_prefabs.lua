@@ -60,7 +60,7 @@ end
 --TestPrefabs();
 
 -- 单身狗
-AddEnabledItem("mone_single_dog", function()
+AddEnabledItem("single_dog", function()
     AddPrefabFiles(env, {
         "mone/mine/single_dog"
     });

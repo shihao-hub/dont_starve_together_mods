@@ -164,6 +164,7 @@ local function _assertion(debug_flag)
 end
 
 -- TODO: 这个 _assertion 这样还是有问题的，按道理应该可以将其再往上层移动一下
+-- 2025-01-11：可以将其同样放入 base 中？暂且放在此处吧，未来我还能看到我这段代码。
 return {
     -- NOTE: 此处的模块放入 base.assertion 中其实挺好的。base.lua 一个文件还是太少了。built-in 多个文件比较好。【慢慢完善吧，重构+设计】
     assertion = _assertion(settings.TEST_ENABLED),

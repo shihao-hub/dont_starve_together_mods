@@ -62,7 +62,7 @@ local content = [[
 
 name = L and "更多物品" or "More Items"
 author = "心悦卿兮"
-version = "4.0.0"
+version = "4.0.1"
 description = _get_description(content)
 
 server_filter_tags = L and { "更多物品" } or { "More Items" }
@@ -93,8 +93,31 @@ if folder_name ~= nil and not folder_name:find("2916137510") then
     end
 end
 
+local OPEN = "开启"
+local CLOSE = "关闭"
+
 configuration_options = {
     large_label("------------------v2"),
+    {
+        name = "lifeinjector_vb__allow_universal_functionality_enable",
+        label = "允许强心素食堡对所有人物使用",
+        hover = "",
+        options = {
+            option(OPEN, true),
+            option(CLOSE, false),
+        },
+        default = false
+    },
+    {
+        name = "piggybag__change_image_enable",
+        label = "容器袋贴图更换并支持换皮肤",
+        hover = "",
+        options = {
+            option(OPEN, true),
+            option(CLOSE, false),
+        },
+        default = false
+    },
 }
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -775,6 +798,7 @@ local v1_configuration_options = {
 
     fns.blank(),
     fns.common_item("__city_lamp", "路灯"),
+    fns.common_item("__single_dog", "单身狗"),
     fns.common_item("__chests_boxs", "豪华系列", "豪华箱子、豪华龙鳞宝箱、豪华冰箱、豪华盐箱"),
     fns.common_item("__garlic_structure", "大蒜·建筑"),
     fns.common_item("__chiminea", "垃圾焚化炉"),
@@ -1365,7 +1389,7 @@ local v1_configuration_options = {
     genericSgcCleanListOption(25);
 }
 
-for i = 1, #configuration_options do
+for i = 1, #v1_configuration_options do
     configuration_options[#configuration_options + 1] = v1_configuration_options[i]
 end
 

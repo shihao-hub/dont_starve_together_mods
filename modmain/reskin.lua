@@ -70,6 +70,12 @@ if config_data.mone_seasack_new_anim then
     });
 end
 
+if config_data.piggybag__change_image_enable then
+    API.reskin("piggyback", "swap_piggyback", {
+        "mone_piggybag"
+    })
+end
+
 -- 路灯套皮个蘑菇灯或菌伞灯试试
 -- 算了，要改 build 吧？emm，我这个功能其实写的挺烂的。。。
 --if config_data.mone_city_lamp_reskin == 1 then

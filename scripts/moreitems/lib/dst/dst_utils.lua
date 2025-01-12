@@ -133,12 +133,12 @@ if select("#", ...) == 0 then
 
         local _new_fn1_3 = module.hook_fn(fn1, function(old_fn)
             return new_fn1_3
-        end, "fn1_")
+        end, "fn1")
 
         assertion.assert_true(new_fn1_1 == _new_fn1_1)
         assertion.assert_true(new_fn1_1 == _new_fn1_2)
         assertion.assert_true(new_fn1_1 == _new_fn1_3)
-    end, print)
+    end, log.error)
 
     local function test()
         local luafun = require("moreitems.lib.thirdparty.luafun.fun")

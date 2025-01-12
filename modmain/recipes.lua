@@ -395,6 +395,30 @@ Recipes[#Recipes + 1] = {
     }
 };
 
+-- TODO: Recipes 应该分担给 prefabs 中的文件吧？还是说饥荒其实不同人复杂不同内容...
+Recipes_Locate["mone_single_dog"] = true;
+Recipes[#Recipes + 1] = {
+    CanMake = env.GetModConfigData("__single_dog"),
+    name = "mone_single_dog",
+    ingredients = {
+        Ingredient("greengem", 1),
+        Ingredient("houndstooth", 200)
+    },
+    tech = TECH.SCIENCE_TWO,
+    config = {
+        placer = "mone_single_dog_placer",
+        min_spacing = 1,
+        nounlock = nil,
+        numtogive = nil,
+        builder_tag = nil,
+        atlas = "images/inventoryimages1.xml",
+        image = "chesspiece_clayhound.tex"
+    },
+    filters = {
+        "MONE_MORE_ITEMS2"
+    }
+};
+
 Recipes_Locate["mone_bookstation"] = true;
 Recipes[#Recipes + 1] = {
     CanMake = env.GetModConfigData("__bookstation"),

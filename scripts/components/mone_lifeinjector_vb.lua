@@ -2,16 +2,22 @@
 --- @author zsh in 2023/1/20 14:27
 ---
 
+local base = require("moreitems.main").shihao.base
+local assertion = require("moreitems.main").shihao.module.assertion
+local stl_table = require("moreitems.main").shihao.module.stl_table
 
 ---@return table|nil
 local function get_persistent_data(filename)
+    base.log.info("call get_persistent_data", "filename: " .. filename)
     local res
     TheSim:GetPersistentString(filename, function(load_success, data)
         if not load_success or data == nil then
+            base.log.info("not load_success or data == nil")
             return
         end
         local success, saved_data = RunInSandbox(data)
         if not success then
+            base.log.info("not success")
             return
         end
         res = saved_data
@@ -44,9 +50,9 @@ local function oneatnum(self, eatnum)
         inst.components.health.maxhealth = self.maxhealth + eatnum * addnum;
         inst.components.health:ForceUpdateHUD(true) --force update HUD
 
-        print("self.currenthealth:" .. tostring(self.currenthealth));
-        print("self.maxhealth:" .. tostring(self.maxhealth));
-        print("inst.components.health.maxhealth:" .. tostring(inst.components.health.maxhealth));
+        --print("self.currenthealth:" .. tostring(self.currenthealth));
+        --print("self.maxhealth:" .. tostring(self.maxhealth));
+        --print("inst.components.health.maxhealth:" .. tostring(inst.components.health.maxhealth));
 
         if inst.components.talker then
             inst.components.talker:Say("当前最大生命值为： " .. inst.components.health.maxhealth)
@@ -54,19 +60,33 @@ local function oneatnum(self, eatnum)
     end
 end
 
+local function _is_player_included(username)
+    return stl_table.contains_value(constants.LIFE_INJECTOR_VB__INCLUDED_PLAYERS, username)
+end
+
 local function _set_persist_data_on_init(component)
+    base.log.info("call _set_persist_data_on_init")
+
     local self = component
 
     local user = self.inst
-    if not constants.LIFE_INJECTOR_VB__INCLUDED_PLAYERS[user.prefab] then
+    if not _is_player_included(user.prefab) then
         return
     end
+
+    --base.log.info("1")
 
     local persist_data = get_persistent_data(self:_get_persist_filename())
     if not persist_data then
         return
     end
+
+    --base.log.info("2")
+
+    self.save_currenthealth = self.inst.components.health.currenthealth
     self.save_maxhealth = persist_data["save_maxhealth"]
+
+    base.log.info("set save_maxhealth field success!")
 end
 
 local VB = Class(function(self, inst)
@@ -78,7 +98,26 @@ local VB = Class(function(self, inst)
     self.eatnum = 0;
 
     -- init 阶段去查持久化的数据，但是需要限制人物，建议只考虑原版人物
-    _set_persist_data_on_init(self)
+    -- Bug: 需要添加延迟，因为 self.inst.userid 默认值是 ""，执行到此处时还未初始化
+    self.inst:DoTaskInTime(0, function()
+        if not _is_player_included(self.inst.prefab) then
+            return
+        end
+
+        assertion.assert_true(_is_player_included(self.inst.prefab))
+
+        local old_save_maxhealth = self.save_maxhealth
+
+        _set_persist_data_on_init(self)
+
+        local has_changed_character = old_save_maxhealth ~= self.save_maxhealth
+        if has_changed_character then
+            base.log.info("111", old_save_maxhealth, self.save_maxhealth)
+            self:HPIncreaseOnLoad()
+        else
+            base.log.info("222", old_save_maxhealth, self.save_maxhealth)
+        end
+    end)
 
     -- 注意 OnLoad 函数会在游戏重新加载时执行，具体查看 entityscript.lua:SetPersistData
 end, nil, {
@@ -86,6 +125,7 @@ end, nil, {
 });
 
 function VB:_get_persist_filename()
+    base.log.info("call _get_persist_filename")
     return "lifeinjector_vb_" .. (self.inst.userid or "default")
 end
 
@@ -113,17 +153,29 @@ function VB:HPIncreaseOnLoad()
 end
 
 function VB:OnSave()
+    base.log.info("call OnSave")
+
     local data = {
         eatnum = self.eatnum,
         save_currenthealth = self.save_currenthealth,
         save_maxhealth = self.save_maxhealth,
     }
     -- 持久化一下
-    set_persist_data(self:_get_persist_filename(), data)
+    --[[
+        测试发现，c_save 的时候确实持久化到文件中了，但是当重选完人物，立刻被序列化为初始值了！
+        这是因为构造函数中 set_persist_data 是延迟后执行的。
+        因此添加 if data.eatnum ~= 0 then 判断条件。
+        这个判断条件保证了序列化数据的不会被破坏
+    ]]
+    if data.eatnum ~= 0 and _is_player_included(self.inst.prefab) then
+        set_persist_data(self:_get_persist_filename(), data)
+    end
     return data
 end
 
 function VB:OnLoad(data)
+    base.log.info("call OnLoad")
+
     if data then
         if data.eatnum and data.save_currenthealth and data.save_maxhealth then
             self.eatnum = data.eatnum;

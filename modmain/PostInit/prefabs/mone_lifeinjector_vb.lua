@@ -2,43 +2,14 @@
 --- @author zsh in 2023/1/20 14:27
 ---
 
+local utils = require("moreitems.main").shihao.utils
 
-local BaseDataType = {
-    _types = {
-        -- json
-        "nil",
-        "number",
-        "string",
-        "list",
-        "dict",
-        -- redis
-        "string",
-        "list",
-        "set",
-        "zset",
-        "hash",
-    },
-}
+local invoke = utils.invoke
 
-local function invoke(fn)
-    return fn()
-end
-
---local set = invoke(function()
---    -- class 定义满足如下条件如何？
---    -- static 放到 static 属性内？其余都是 instance 属性？
---
---    local cls = {}
---
---    cls.__call__ = function(t, key, value)
---
---    end
---
---    return cls
---end)
 ------------------------------------------------------------------------------------------------------------------------
 
-local allow_universal_functionality_enable = false
+local allow_universal_functionality_enable = TUNING.MONE_TUNING.GET_MOD_CONFIG_DATA["lifeinjector_vb__allow_universal_functionality_enable"]
+local constants = require("more_items_constants")
 
 local config_data = TUNING.MONE_TUNING.GET_MOD_CONFIG_DATA;
 
@@ -49,15 +20,7 @@ end
 ---@type table<any,boolean>
 local INCLUDE_PLAYERS = invoke(function()
     local res = {}
-    local included_players = {
-        -- 排除 旺达、机器人、小鱼人
-        "wilson", "willow", "wolfgang", "wendy", "wickerbottom", "woodie", "wes", "waxwell",
-        "wathgrithr", "webber", "winona", "warly", "wortox", "wormwood", "wonkey", "walter",
-        -- 加回 机器人
-        "wx78", --[["wurt","wanda",]] -- 旺达和小鱼人有点不好处理
-        "jinx", -- https://steamcommunity.com/sharedfiles/filedetails/?id=479243762
-        "monkey_king", "neza", "white_bone", "pigsy", "yangjian", "myth_yutu", "yama_commissioners", "madameweb",
-    }
+    local included_players = constants.LIFE_INJECTOR_VB__INCLUDED_PLAYERS
     for _, v in ipairs(included_players) do
         res[v] = true
     end

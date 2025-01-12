@@ -24,6 +24,28 @@ local module = setmetatable({}, {
 module.if_present = guards.if_present
 module.if_present_or_else = guards.if_present_or_else
 
+
+------------------------------------------------------------------------------------------------------------------------
+
+local function _invoke(fn, ...)
+    return fn(...)
+end
+
+-- Question: 如果 get_varargs 变成 public，岂不是在 utils 中出现了循环依赖？这种问题如何解决为好呢？
+-- Answer: 以下列方式可以解决，只要保证 _get_varargs 不要用到 module 中的方法即可
+local function _get_varargs(...)
+    return { n = select("#", ...), ... }
+end
+
+local function _iter_varargs(process_each_element, ...)
+    local args = _get_varargs(...)
+    for i = 1, args.n do
+        process_each_element(args[i])
+    end
+end
+
+------------------------------------------------------------------------------------------------------------------------
+
 local function _do_nothing()
 
 end
@@ -41,21 +63,8 @@ function module.generate_set(values)
     return res
 end
 
--- Question: 如果 get_varargs 变成 public，岂不是在 utils 中出现了循环依赖？这种问题如何解决为好呢？
--- Answer: 以下列方式可以解决，只要保证 _get_varargs 不要用到 module 中的方法即可
-local function _get_varargs(...)
-    return { n = select("#", ...), ... }
-end
-
 function module.get_varargs(...)
     return _get_varargs(...)
-end
-
-local function iter_varargs(process_each_element, ...)
-    local args = _get_varargs(...)
-    for i = 1, args.n do
-        process_each_element(args[i])
-    end
 end
 
 function module.all_null(...)
@@ -90,10 +99,6 @@ function module.get_module_env()
     return res
 end
 
-local function _invoke(fn, ...)
-    return fn(...)
-end
-
 ---直接调用 fn 函数
 ---大部分使用场景为匿名函数，因为存在 upvalue，其实 `...` 可变参数应该没有什么存在的价值。
 ---因为对于 lua 而言，upvalue 我可以认为是参数输出，即指针
@@ -103,14 +108,34 @@ end
 
 function module.invoke_safe(fn, ...)
     local res
-    local args = { ... }
-    local n = select("#", ...)
+    local args = _get_varargs(...)
     xpcall(function()
-        res = fn(unpack(args, n))
+        res = _invoke(fn, unpack(args, 1, args.n))
     end, function(msg)
         log.error(msg)
     end)
     return res
+end
+
+-------------------------------------------------------------------------------
+---使用注意事项：
+---1. 只能在 for 循环中使用（建议在大量循环时使用，比如五百次以上、上千次、上万次循环）
+---2. loop_cache 每次循环都是同一个
+---3. fn 不允许存在 for 循环中会发生变化的上值
+---
+---总结，本方法是在需要优化的时候才能使用的方法，因为第 2 点和第 3 点的条件过于苛刻，容易出错。
+-------------------------------------------------------------------------------
+function module.__invoke_for_loop(loop_cache, fn, ...)
+    -- NOTE: 这个实现方式是有问题的，因为与其这样，那我还在循环中创建函数干嘛？移出去定义一次不就行了？
+    local args = _get_varargs(...)
+    local key = ""
+    for i = 1, args.n do
+        key = key .. tostring(args[i])
+    end
+    if loop_cache[key] == nil then
+        loop_cache[key] = fn
+    end
+    return _invoke(loop_cache[key], ...)
 end
 
 ---打印某个函数的执行消耗时间
@@ -147,9 +172,40 @@ function module.time_block(runable)
     return res
 end
 
+--local BASE_DATA_TYPE = {
+--    TYPES = {
+--        -- json
+--        "nil",
+--        "number",
+--        "string",
+--        "list",
+--        "dict",
+--        -- redis
+--        "string",
+--        "list",
+--        "set",
+--        "zset",
+--        "hash",
+--    },
+--}
+
+--local set = invoke(function()
+--    -- class 定义满足如下条件如何？
+--    -- static 放到 static 属性内？其余都是 instance 属性？
+--
+--    local cls = {}
+--
+--    cls.__call__ = function(t, key, value)
+--
+--    end
+--
+--    return cls
+--end)
+
 -- NOTE: 刚刚突然意识到一个问题，为什么要 require 都放在文件开头呢？除了必要的一些常用模块，不常用的模块我直接在函数中引用不好吗？封装性强还能避免循环依赖。
 function module.namedtuple(fields)
     local NamedTuple = require("moreitems.lib.shihao.class.NamedTuple")
+    error("NotImpletedError")
 end
 
 if select('#', ...) == 0 then

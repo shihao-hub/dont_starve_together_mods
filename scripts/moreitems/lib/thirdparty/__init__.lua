@@ -5,6 +5,8 @@ return {
     luafun = require("moreitems.lib.thirdparty.luafun.fun"),
     lustache = require("moreitems.lib.thirdparty.lustache.lustache"),
     middleclass = require("moreitems.lib.thirdparty.middleclass.middleclass"),
+
+    extensions = require("moreitems.lib.thirdparty.extensions"),
 }
 
 --[[

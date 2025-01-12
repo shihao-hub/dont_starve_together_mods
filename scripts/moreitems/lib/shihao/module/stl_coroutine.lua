@@ -408,6 +408,11 @@ local function simple_async_framework_design()
                     render_text()
                     tmp_render_cnt = 1
                 end
+
+                -- When all other things were done, sleep a while.
+                -- In order to wait for the `tasks` to be filled.
+                -- But Lua does not provide the `sleep` function, so I use `os.execute` to call the `sleep` command?
+                -- Sleep can be used to **avoid CPU usage 100%**.
             end
         end)
     end

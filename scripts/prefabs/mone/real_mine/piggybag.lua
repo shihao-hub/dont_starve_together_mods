@@ -11,23 +11,18 @@ local internal = {
 }
 
 ------------------------------------------------------------------------------------------------------------------------
-local change_image_enable = true
+local change_image_enable = TUNING.MONE_TUNING.GET_MOD_CONFIG_DATA.piggybag__change_image_enable
 
-local assets
+local assets = {
+    Asset("ANIM", "anim/mone_piggybag.zip"),
+    Asset("IMAGE", "images/inventoryimages/mone_piggybag.tex"),
+    Asset("ATLAS", "images/inventoryimages/mone_piggybag.xml"),
 
-if change_image_enable then
-    assets = {
-        Asset("ANIM", "anim/piggyback.zip"),
-        Asset("ANIM", "anim/swap_piggyback.zip"),
-        Asset("ANIM", "anim/ui_piggyback_2x6.zip"),
-    }
-else
-    assets = {
-        Asset("ANIM", "anim/mone_piggybag.zip"),
-        Asset("IMAGE", "images/inventoryimages/mone_piggybag.tex"),
-        Asset("ATLAS", "images/inventoryimages/mone_piggybag.xml")
-    }
-end
+    -- if change_image_enable then
+    Asset("ANIM", "anim/piggyback.zip"),
+    Asset("ANIM", "anim/swap_piggyback.zip"),
+    Asset("ANIM", "anim/ui_piggyback_2x6.zip"),
+}
 
 local tool_bag_auto_open = TUNING.MONE_TUNING.GET_MOD_CONFIG_DATA.tool_bag_auto_open;
 local storage_bag_auto_open = TUNING.MONE_TUNING.GET_MOD_CONFIG_DATA.storage_bag_auto_open;

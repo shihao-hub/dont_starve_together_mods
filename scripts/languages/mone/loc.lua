@@ -108,6 +108,11 @@ local prefabsInfo = {
         describe = "想要解放双手吗？找我呀！",
         recipe_desc = COMMON_RECIPE_DESC
     },
+    ["mone_single_dog"] = {
+        names = "单身狗",
+        describe = "我只允许有我一条狗！",
+        recipe_desc = COMMON_RECIPE_DESC
+    },
     ["mone_skull_chest"] = {
         names = "杂物箱",
         describe = nil,

@@ -2,6 +2,8 @@
 --- DateTime: 2024/12/5 16:38
 ---
 
+local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
+
 local class = require("moreitems.lib.thirdparty.middleclass.middleclass")
 local checker = require("moreitems.lib.shihao.module.checker")
 
@@ -11,7 +13,8 @@ local DSTUtils = class("DSTUtils")
 ---需要用到 env 的函数将封装到此处
 ---@param env env
 function DSTUtils:initialize(env)
-    checker.require_not_null(env)
+    print(inspect(env))
+    checker.require_not_nil(env)
     self.env = env
 end
 

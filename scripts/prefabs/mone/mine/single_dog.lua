@@ -19,7 +19,7 @@ local metadata = {
     name = constants.SINGLE_DOG__PREFAB_NAME,
     chinese_name = constants.SINGLE_DOG__PREFAB_CHINESE_NAME,
     assets = {
-        Asset("ANIM", "anim/sand_castle.zip"),
+
     }
 }
 
@@ -49,6 +49,12 @@ local kill_dogs_periodic = internal.invoke(function()
     end
 
     local function percentage_bleeding(dog)
+        local bleeding = false
+        if not bleeding then
+            dog.components.health:Kill()
+            return
+        end
+
         local maxhealth = dog.components.health.maxhealth
         local percentage = constants.SINGLE_DOG__DETECTION__BLEEDING_PERCENTAGE
         dog.components.health:DoDelta(-maxhealth * percentage, nil, nil, nil, nil, true)
@@ -64,7 +70,7 @@ local kill_dogs_periodic = internal.invoke(function()
                 constants.SINGLE_DOG__DETECTION__MUST_TAGS,
                 constants.SINGLE_DOG__DETECTION__CANT_TAGS,
                 constants.SINGLE_DOG__DETECTION__MUST_ONE_OF_TAGS)
-        for dog in ipairs(dogs) do
+        for _, dog in pairs(dogs) do
             if dog.components.health then
                 percentage_bleeding(dog)
                 display_fx(dog)
@@ -72,6 +78,43 @@ local kill_dogs_periodic = internal.invoke(function()
         end
     end
 end)
+
+local PLACER_SCALE = constants.SINGLE_DOG__DETECTION__PLACER_SCALE
+
+local function OnEnableHelper(inst, enabled)
+    if enabled then
+        if inst.helper == nil then
+            inst.helper = CreateEntity()
+
+            --[[Non-networked entity]]
+            inst.helper.entity:SetCanSleep(false)
+            inst.helper.persists = false
+
+            inst.helper.entity:AddTransform()
+            inst.helper.entity:AddAnimState()
+
+            inst.helper:AddTag("CLASSIFIED")
+            inst.helper:AddTag("NOCLICK")
+            inst.helper:AddTag("placer")
+
+            inst.helper.Transform:SetScale(PLACER_SCALE, PLACER_SCALE, PLACER_SCALE)
+
+            inst.helper.AnimState:SetBank("firefighter_placement")
+            inst.helper.AnimState:SetBuild("firefighter_placement")
+            inst.helper.AnimState:PlayAnimation("idle")
+            inst.helper.AnimState:SetLightOverride(1)
+            inst.helper.AnimState:SetOrientation(ANIM_ORIENTATION.OnGround)
+            inst.helper.AnimState:SetLayer(LAYER_BACKGROUND)
+            inst.helper.AnimState:SetSortOrder(1)
+            inst.helper.AnimState:SetAddColour(0, .2, .5, 0)
+
+            inst.helper.entity:SetParent(inst.entity)
+        end
+    elseif inst.helper ~= nil then
+        inst.helper:Remove()
+        inst.helper = nil
+    end
+end
 
 -- TODO: 熔炉的源代码非常值得阅读，似乎是很标准的 OOP，虽然阅读困难，接手也慢，但是熟悉之后肯定能大大增加开发效率，降低开发成本
 -- prefab 的 fn 中，最好不要出现匿名函数，建议在外面定义函数
@@ -85,9 +128,15 @@ local function fn()
 
     MakeObstaclePhysics(inst, constants.SINGLE_DOG__OBSTACLE_PHYSICS_HEIGHT)
 
-    inst.AnimState:SetBank("sand_castle")
-    inst.AnimState:SetBuild("sand_castle")
-    inst.AnimState:PlayAnimation("full")
+    inst.AnimState:SetBank("clayhound")
+    inst.AnimState:SetBuild("clayhound")
+    inst.AnimState:PlayAnimation("idle")
+
+    --Dedicated server does not need deployhelper
+    if not TheNet:IsDedicated() then
+        inst:AddComponent("deployhelper")
+        inst.components.deployhelper.onenablehelper = OnEnableHelper
+    end
 
     inst.entity:SetPristine()
 
@@ -111,4 +160,4 @@ local function fn()
 end
 
 return Prefab(metadata.name, fn, metadata.assets),
-MakePlacer(metadata.name .. "_placer", "sand_castle", "sand_castle", "full", nil, nil, nil)
+MakePlacer(metadata.name .. "_placer", "clayhound", "clayhound", "idle", nil, nil, nil)

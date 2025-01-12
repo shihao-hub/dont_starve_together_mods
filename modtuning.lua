@@ -45,6 +45,9 @@ TUNING.MONE_TUNING = {
         auto_sorter_notags_extra = env.GetModConfigData("auto_sorter_notags_extra");
     };
     GET_MOD_CONFIG_DATA = {
+        lifeinjector_vb__allow_universal_functionality_enable = env.GetModConfigData("lifeinjector_vb__allow_universal_functionality_enable");
+        piggybag__change_image_enable = true,
+
         -- 2023-09-10
         mone_seasack_capacity_increase = env.GetModConfigData("mone_seasack_capacity_increase");
         --[[
@@ -169,6 +172,7 @@ TUNING.MONE_TUNING = {
         garlic_structure = env.GetModConfigData("__garlic_structure");
         arborist = env.GetModConfigData("__arborist");
         city_lamp = env.GetModConfigData("__city_lamp");
+        single_dog = env.GetModConfigData("__single_dog");
         chests_boxs = env.GetModConfigData("__chests_boxs");
         firesuppressor = env.GetModConfigData("__firesuppressor");
         dragonflyfurnace = env.GetModConfigData("__dragonflyfurnace");

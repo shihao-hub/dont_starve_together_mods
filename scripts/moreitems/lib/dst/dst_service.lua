@@ -37,6 +37,14 @@ function module.SetOnEntityReplicated(inst, prefab, data)
 
     local loc = Local()
 
+    -- 2025-01-12：这种需要测试的功能暂时先不考虑
+    local cache_enable = false
+
+    if not cache_enable then
+        inst.SetOnEntityReplicated = loc.GetOnEntityReplicated(inst, prefab, data)
+        return
+    end
+
     local key = base.string_format("{{ prefab }}_OnEntityReplicated", { prefab = inst.prefab })
     -- NOTE: 此处缓存的目的是，让 fun-prefab 一对一关系变成一对多关系。
     if cache[key] == nil then

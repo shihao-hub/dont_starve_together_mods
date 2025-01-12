@@ -2,9 +2,9 @@
 --- DateTime: 2024/12/5 16:35
 ---
 
-local dst = require("moreitems.main").dst.class.DSTUtils
+local dst = require("moreitems.main").dst
 
-local dst_utils = dst.DSTUtils(env)
+local dst_utils = dst.class.DSTUtils(env)
 
 env.modimport("mod_config.lua")
 
