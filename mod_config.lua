@@ -3,7 +3,7 @@
 ---
 
 
-TUNING.MR_MOD_CONFIG = {
-    test = 1
-}
+--TUNING.MR_MOD_CONFIG = {
+--    test = 1
+--}
 

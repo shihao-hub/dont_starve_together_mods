@@ -62,7 +62,7 @@ local content = [[
 
 name = L and "更多物品" or "More Items"
 author = "心悦卿兮"
-version = "4.0.1"
+version = "4.0.1_1"
 description = _get_description(content)
 
 server_filter_tags = L and { "更多物品" } or { "More Items" }
