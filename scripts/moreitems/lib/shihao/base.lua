@@ -34,11 +34,53 @@ function module.bool(val)
     return _bool(val)
 end
 
+-- FIXME: 这将不存在短路特性了 
 function module.ternary_operator(condition, expression1, expression2)
     if _bool(condition) then
         return expression1
     end
     return expression2
+end
+
+-- 大致简单模仿了 js 的参数归一化
+local function _normalize_parameter(arg)
+    -- JS:
+    --  如果是函数，则设置返回的 get = arg, set = function() error("xxx was assigned to but it has no setter.") end
+    --  如果不是函数，则设置返回的 get = arg.get, set = arg.set
+    --  注意，JS 中全是对象，所以可以这样！
+    -- Question: 那 Lua 中如何是好？好像几乎没有参考价值。。。
+    --  按照目前的实现的话，其实设置一个 class，然后返回值是这个 class，挺好的，至少用户知道咋用就行了...
+
+    if type(arg) ~= "function" then
+        local old_arg = arg
+        arg = function()
+            return old_arg
+        end
+    end
+
+    local obj = {}
+
+    obj._value = arg()
+
+    function obj:get()
+        return self._value
+    end
+
+    function obj:set(value)
+        self._value = value
+    end
+
+    return obj
+end
+
+function module.t_op(condition, expression_or_lazy_fn1, expression_or_lazy_fn2)
+    local arg2 = _normalize_parameter(expression_or_lazy_fn1)
+    local arg3 = _normalize_parameter(expression_or_lazy_fn2)
+
+    if _bool(condition) then
+        return arg2:get()
+    end
+    return arg3:get()
 end
 
 ---switch 只支持 string（YAGNI！KISS！），因为单纯我自己使用，只支持 string 即可
@@ -118,6 +160,8 @@ if select("#", ...) == 0 then
     --local log = require("moreitems.lib.shihao.module.log")
     log.info(module.string_format("{{ name         }}", { name = "zsh" }))
     log.info(module.string_format2("{{name        }}", { name = "zsh" }))
+
+    log.info(module.t_op(true, function() return 111 end, 222))
 end
 
 return module
