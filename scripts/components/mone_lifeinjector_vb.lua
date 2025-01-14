@@ -6,6 +6,9 @@ local base = require("moreitems.main").shihao.base
 local assertion = require("moreitems.main").shihao.module.assertion
 local stl_table = require("moreitems.main").shihao.module.stl_table
 
+local inherit_when_change_character = true
+
+local interval = {}
 ---@return table|nil
 local function get_persistent_data(filename)
     base.log.info("call get_persistent_data", "filename: " .. filename)
@@ -64,7 +67,7 @@ local function _is_player_included(username)
     return stl_table.contains_value(constants.LIFE_INJECTOR_VB__INCLUDED_PLAYERS, username)
 end
 
-local function _set_persist_data_on_init(component)
+local function _set_persist_data_on_init(component, persist_data)
     base.log.info("call _set_persist_data_on_init")
 
     local self = component
@@ -76,15 +79,16 @@ local function _set_persist_data_on_init(component)
 
     --base.log.info("1")
 
-    local persist_data = get_persistent_data(self:_get_persist_filename())
+    persist_data = base.t_op(persist_data, persist_data, function() get_persistent_data(self:_get_persist_filename()) end)
     if not persist_data then
         return
     end
 
     --base.log.info("2")
 
+    self.eatnum = persist_data.eatnum
     self.save_currenthealth = self.inst.components.health.currenthealth
-    self.save_maxhealth = persist_data["save_maxhealth"]
+    self.save_maxhealth = persist_data.save_maxhealth
 
     base.log.info("set save_maxhealth field success!")
 end
@@ -97,8 +101,11 @@ local VB = Class(function(self, inst)
 
     self.eatnum = 0;
 
+
+    -- 换人保存逻辑只和该延迟函数有关！
     -- init 阶段去查持久化的数据，但是需要限制人物，建议只考虑原版人物
     -- Bug: 需要添加延迟，因为 self.inst.userid 默认值是 ""，执行到此处时还未初始化
+    -- NOTE: 此处添加了延迟，因此在构造函数中用到了属于 self 的函数将可以接受了。（构造函数中不推荐调用和 self 有关的函数，比如用到了 self）
     self.inst:DoTaskInTime(0, function()
         if not _is_player_included(self.inst.prefab) then
             return
@@ -108,15 +115,23 @@ local VB = Class(function(self, inst)
 
         local old_save_maxhealth = self.save_maxhealth
 
-        _set_persist_data_on_init(self)
+        local persist_data = get_persistent_data(self:_get_persist_filename())
 
-        local has_changed_character = old_save_maxhealth ~= self.save_maxhealth
-        if has_changed_character then
-            base.log.info("111", old_save_maxhealth, self.save_maxhealth)
-            self:HPIncreaseOnLoad()
-        else
-            base.log.info("222", old_save_maxhealth, self.save_maxhealth)
+        local _is_changing_character = function()
+            return inherit_when_change_character and self.save_maxhealth ~= persist_data.save_maxhealth
         end
+
+        local is_changing_character = _is_changing_character()
+
+        if not is_changing_character then
+            base.log.info("not is_changing_character", old_save_maxhealth, self.save_maxhealth)
+            return
+        end
+
+        _set_persist_data_on_init(self, persist_data)
+
+        base.log.info("is_changing_character", old_save_maxhealth, self.save_maxhealth)
+        self:HPIncreaseOnLoad()
     end)
 
     -- 注意 OnLoad 函数会在游戏重新加载时执行，具体查看 entityscript.lua:SetPersistData
