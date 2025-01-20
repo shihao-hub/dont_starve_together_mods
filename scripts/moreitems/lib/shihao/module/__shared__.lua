@@ -10,6 +10,8 @@ local insepect = require("moreitems.lib.thirdparty.inspect.inspect")
 local base = require("moreitems.lib.shihao.base")
 local settings = require("moreitems.settings")
 
+local __main__ = select("#", ...) == 0
+
 local function _check_args_for_array_equals(array1, array2)
     -- 突然发现总是要校验参数类型好难受，我记得有个编程规范是相信输入是正确的？
     -- 校验参数类型在静态语言不需要，动态语言如果不校验，会导致 bug 和错误发生点相隔太远
@@ -34,7 +36,7 @@ local function array_equals(array1, array2)
     return true
 end
 
-local function _assertion(debug_flag)
+local function _assertion()
     local module = {}
     local static = { switch = true }
 
@@ -127,7 +129,13 @@ local function _assertion(debug_flag)
         error("AssertionFailedError: Message ==> Expected value to not be null." .. _get_case_str(case), 2)
     end
 
-    if debug_flag then
+    if __main__ then
+        local function error_print(message)
+            io.stderr:write(message, "\n")
+        end
+
+        -- 2025-01-18：此处多个 xpcall 是为了单独测试
+
         --[[ assert_array_equals ]]
         xpcall(function()
             local test_cases = {
@@ -137,27 +145,27 @@ local function _assertion(debug_flag)
             for _, case in ipairs(test_cases) do
                 module.assert_array_equals(case[1], case[2], case)
             end
-        end, print)
+        end, error_print)
 
         --[[ assert_true ]]
         xpcall(function()
             module.assert_true(true)
-        end, print)
+        end, error_print)
 
         --[[ assert_false ]]
         xpcall(function()
             module.assert_false(false)
-        end, print)
+        end, error_print)
 
         --[[ assert_nil ]]
         xpcall(function()
             module.assert_nil(nil)
-        end, print)
+        end, error_print)
 
         --[[ assert_not_nil ]]
         xpcall(function()
             module.assert_not_nil(1)
-        end, print)
+        end, error_print)
     end
 
     return module
@@ -167,7 +175,7 @@ end
 -- 2025-01-11：可以将其同样放入 base 中？暂且放在此处吧，未来我还能看到我这段代码。
 return {
     -- NOTE: 此处的模块放入 base.assertion 中其实挺好的。base.lua 一个文件还是太少了。built-in 多个文件比较好。【慢慢完善吧，重构+设计】
-    assertion = _assertion(settings.TEST_ENABLED),
+    assertion = _assertion(),
 
     log = base.log, -- 运用了重构，由于 log 已经被广泛使用过了，因此选择在这里设置委托
 

@@ -90,19 +90,19 @@ end
 -- TODO: 这是一个全局 CallCounter 实例，然后在设置一个定时器，周期存储到文件中？
 
 if select("#", ...) == 0 then
-    local luafun = require("moreitems.lib.thirdparty.luafun.fun")
-    local stl_debug = require("moreitems.lib.shihao.module.stl_debug")
-    local counter = CallCounter()
-    --counter:incr(stl_debug.get_call_location() .. ":unknown")
-    for i in luafun.range(10) do
-        counter:incr(stl_debug.get_call_filepath() .. ".unknown")
-    end
-
-    print(counter:get("moreitems.lib.shihao.class.CallCounter.unknown"))
-    print(counter:tostring())
-
-    local info = debug.getinfo(2, "l")
-    print("错误发生的行号是: " .. info.currentline)
+    --local luafun = require("moreitems.lib.thirdparty.luafun.fun")
+    --local stl_debug = require("moreitems.lib.shihao.module.stl_debug")
+    --local counter = CallCounter()
+    ----counter:incr(stl_debug.get_call_location() .. ":unknown")
+    --for i in luafun.range(10) do
+    --    counter:incr(stl_debug.get_call_filepath() .. ".unknown")
+    --end
+    --
+    --print(counter:get("moreitems.lib.shihao.class.CallCounter.unknown"))
+    --print(counter:tostring())
+    --
+    --local info = debug.getinfo(2, "l")
+    --print("错误发生的行号是: " .. info.currentline)
 end
 
 return CallCounter

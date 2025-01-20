@@ -4,7 +4,13 @@ local Context  = require "moreitems.lib.thirdparty.lustache.context"
 local error, ipairs, pairs, setmetatable, tostring, type = 
       error, ipairs, pairs, setmetatable, tostring, type 
 local math_floor, math_max, string_find, string_gsub, string_split, string_sub, table_concat, table_insert, table_remove =
-      math.floor, math.max, string.find, string.gsub, string.split, string.sub, table.concat, table.insert, table.remove
+      math.floor, math.max, string.find, string.gsub, nil, string.sub, table.concat, table.insert, table.remove
+
+string_split = function(str, sep)
+  local out = {}
+  for m in string.gmatch(str, "[^"..sep.."]+") do out[#out+1] = m end
+  return out
+end
 
 local patterns = {
   white = "%s*",

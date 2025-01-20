@@ -1,114 +1,202 @@
 ---
---- DateTime: 2024/12/5 16:38
+--- DateTime: 2025/1/6 15:47
 ---
 
 local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
 
-local class = require("moreitems.lib.thirdparty.middleclass.middleclass")
-local checker = require("moreitems.lib.shihao.module.checker")
+local base = require("moreitems.lib.shihao.base")
+local log = base.log
 
----@class DSTUtils
-local DSTUtils = class("DSTUtils")
+local module = {}
+local cache = {}
+local static = {}
 
----需要用到 env 的函数将封装到此处
----@param env env
-function DSTUtils:initialize(env)
-    print(inspect(env))
-    checker.require_not_nil(env)
-    self.env = env
+function module.is_valid(inst)
+    return inst ~= nil and inst.IsValid and inst:IsValid()
 end
 
----@param modulename string
----@return table
-function DSTUtils:modimport(modulename)
-    local env = self.env
-
-    print("modimport: " .. env.MODROOT .. modulename)
-    if string.sub(modulename, #modulename - 3, #modulename) ~= ".lua" then
-        modulename = modulename .. ".lua"
-    end
-    local result = kleiloadlua(env.MODROOT .. modulename)
-    if result == nil then
-        error("Error in modimport: " .. modulename .. " not found!")
-    elseif type(result) == "string" then
-        error("Error in modimport: " .. ModInfoname(modname) .. " importing " .. modulename .. "!\n" .. result)
-    else
-        setfenv(result, env.env)
-        -- 2024-12-05：复制于 modimport 函数，修改其返回值
-        return result()
-    end
+function module.get_mod_config_data(key)
+    return TUNING.MONE_TUNING.GET_MOD_CONFIG_DATA[key]
 end
 
-function DSTUtils:is_debug()
-    local env = self.env
-    return env.GetModConfigData("debug") == true and env.modname == morel_DEBUG_DIR_NAME
-end
-
-function DSTUtils:get_mod_root()
-    local env = self.env
-    return MODS_ROOT .. env.modname .. "/";
-end
-
-function DSTUtils:add_assets(assets)
-    local env = self.env
-
-    -- 有可能出现没有传递 { Asset, Asset, ... } 而是传递 Asset 的情况
-    if assets.is_a and assets:is_a(Asset) then
-        assets = { assets }
-    end
-
-    for _, asset in ipairs(assets) do
-        table.insert(env.Assets, asset);
-    end
-end
-
-local function AddPrefabFilesHelper()
-    local obj = {}
-
-    function obj:delete_path_lua_suffix(path)
-        local i, j = string.find(path, "%.lua$");
-        if i ~= nil then
-            path = string.sub(path, 1, i - 1);
+function module.get_persistent_data(filename)
+    base.log.info("call get_persistent_data", "filename: " .. filename)
+    local res
+    TheSim:GetPersistentString(filename, function(load_success, data)
+        if not load_success or data == nil then
+            base.log.info("not load_success or data == nil")
+            return
         end
-        return path
-    end
-
-    return obj
+        local success, saved_data = RunInSandbox(data)
+        if not success then
+            base.log.info("not success")
+            return
+        end
+        res = saved_data
+    end)
+    return res
 end
 
-function DSTUtils:add_prefab_files(prefabfiles)
-    -- 很像 Python 呀，没有 new 好舒服
-    local helper = AddPrefabFilesHelper()
-
-    local env = self.env
-
-    for _, path in ipairs(prefabfiles) do
-        path = helper:delete_path_lua_suffix(path)
-        table.insert(env.PrefabFiles, path);
-    end
+---@param filename string
+---@param data table
+function module.set_persist_data(filename, data)
+    base.log.info("call set_persist_data", "filename: " .. filename)
+    -- DataDumper(filters, nil, false)
+    --  fastmode 为 false，表示禁用快速模式，生成的 Lua 代码会更加详细和完整。
+    --  astmode 为 true，表示启用快速模式，生成的 Lua 代码会更加简洁，但可能会丢失一些细节。
+    local str = DataDumper(data, nil, true)
+    TheSim:SetPersistentString(filename, str, false)
 end
 
----@return any module file 的返回值，一般是 return {}
-function DSTUtils:import_module(modulename, environment)
-    local env = self.env
-
-    environment = environment or env;
-
-    --install our crazy loader!
-    print("import_module: " .. env.MODROOT .. modulename)
-    if string.sub(modulename, #modulename - 3, #modulename) ~= ".lua" then
-        modulename = modulename .. ".lua"
+function module.add_tags(inst, tags)
+    if type(tags) == "string" then
+        tags = { tags }
     end
-    local result = kleiloadlua(env.MODROOT .. modulename)
-    if result == nil then
-        error("Error in import_module: " .. modulename .. " not found!")
-    elseif type(result) == "string" then
-        error("Error in import_module: " .. ModInfoname(env.modname) .. " importing " .. modulename .. "!\n" .. result)
-    else
-        setfenv(result, environment);
-        return result();
+
+    for _, tag in ipairs(tags) do
+        if not inst:HasTag(tag) then
+            inst:AddTag(tag)
+        end
     end
 end
 
+local function _get_enabled_mods()
+    local res = {}
+    for _, dir in pairs(KnownModIndex:GetModsToLoad(true)) do
+        local info = KnownModIndex:GetModInfo(dir)
+        local name = info and info.name or "unknown"
+        res[dir] = name
+    end
+    return res -- table<string:DirectoryName, string:ModInfoName>
+end
 
-return DSTUtils
+local function _is_mod_enabled(name)
+    -- 这个方式可以让 _get_enabled_mods 在函数被调用的时候才执行，即在 import module 时，不应该执行代码逻辑【个人看法】
+    if cache.enabled_mods == nil then
+        cache.enabled_mods = _get_enabled_mods()
+    end
+    for k, v in pairs(cache.enabled_mods) do
+        if v and (k:match(name) or v:match(name)) then
+            return true
+        end
+    end
+    return false
+end
+
+---模组是否开启：name/id 均可
+function module.is_mod_enabled(name)
+    return _is_mod_enabled(name)
+end
+
+function module.oneof_mod_enabled(...)
+    local args = { n = select("#", ...), ... }
+    for i = 1, args.n do
+        if _is_mod_enabled(args[i]) then
+            return true
+        end
+    end
+    return false
+end
+
+local function _generate_hook_fn()
+    local cache = {}
+
+    ---@param old_fn function 原函数
+    ---@param generate_present_fn fun(old_fn:function) 生成现函数的函数
+    ---@param unique_key string 唯一键值对
+    local function hook_fn(old_fn, generate_present_fn, unique_key)
+        local function Local()
+            local obj = {}
+
+            function obj.generate_unique_key(old_fn, unique_key)
+                if not base.is_function(old_fn) then
+                    return unique_key
+                end
+                -- 需要以 old_fn 为键来缓存
+                return tostring(old_fn):sub(11, -1) .. "|" .. unique_key
+            end
+
+            return obj
+        end
+        local loc = Local()
+
+        unique_key = loc.generate_unique_key(old_fn, unique_key)
+
+        if unique_key == nil then
+            return generate_present_fn(old_fn)
+        end
+        if cache[unique_key] == nil then
+            cache[unique_key] = generate_present_fn(old_fn)
+            log.info(base.string_format("cache misses, cached data: `{{key}} -> {{value}}`", { key = unique_key, value = cache[unique_key] }))
+        else
+            log.info(base.string_format("cached data: `{{key}} -> {{value}}`", { key = unique_key, value = cache[unique_key] }))
+        end
+        return cache[unique_key]
+    end
+
+    return hook_fn
+end
+
+--[[---@param old_fn function 原函数
+---@param generate_present_fn fun(old_fn:function) 生成现函数的函数
+function module.hook(old_fn, generate_present_fn)
+    return generate_present_fn(old_fn)
+end]]
+module.hook_fn = _generate_hook_fn()
+
+if select("#", ...) == 0 then
+
+    local assertion = require("moreitems.lib.shihao.module.assertion")
+    --[[ hook ]]
+    xpcall(function()
+        local fn1 = function() end
+        local new_fn1_1 = function() end
+        local new_fn1_2 = function() end
+        local new_fn1_3 = function() end
+        print("      fn1:", fn1)
+        print("new_fn1_1:", new_fn1_1)
+        print("new_fn1_2:", new_fn1_2)
+        print("new_fn1_3:", new_fn1_3)
+        local _new_fn1_1 = module.hook_fn(fn1, function(old_fn)
+            return new_fn1_1
+        end, "fn1")
+
+        local _new_fn1_2 = module.hook_fn(fn1, function(old_fn)
+            return new_fn1_2
+        end, "fn1")
+
+        local _new_fn1_3 = module.hook_fn(fn1, function(old_fn)
+            return new_fn1_3
+        end, "fn1")
+
+        assertion.assert_true(new_fn1_1 == _new_fn1_1)
+        assertion.assert_true(new_fn1_1 == _new_fn1_2)
+        assertion.assert_true(new_fn1_1 == _new_fn1_3)
+    end, log.error)
+
+    local function test()
+        local luafun = require("moreitems.lib.thirdparty.luafun.fun")
+        local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
+
+        local utils = require("moreitems.lib.shihao.utils")
+
+        local t = { 1, 2, nil, 2, 3, nil, nil, nil, 4, a = 1, b = 2 }
+        local iter_t = luafun.iter(t)
+        for i, v in luafun.iter(iter_t) do
+            print(i, v)
+        end
+        print(inspect.inspect(luafun.totable(luafun.filter(function(e) return e >= 2 end, luafun.iter(t)))))
+        print(inspect.inspect(luafun.tomap(luafun.filter(function(e) return e >= 2 end, luafun.iter(t)))))
+        print(inspect.inspect(luafun.tomap(luafun.iter({ 1, 2 }))))
+
+        --print(luafun.totable(luafun.iter({ 1, 2, 3, 4, 5 })))
+        --for i, v in pairs(luafun.totable(luafun.iter({ 1, 2, 3, 4, 5 }))) do
+        --    print(i, v)
+        --end
+        --print(inspect.inspect(luafun.totable(luafun.iter({ 1, 2, 3, 4, 5 }))))
+    end
+    --test()
+
+end
+
+return module

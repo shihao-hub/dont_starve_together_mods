@@ -289,6 +289,7 @@ end
 env.modimport("new_modmain.lua")
 
 -- 2024-12-05-16:35 创建
+-- 2025-01-12 更新后，创意工坊总是卡在 modmain2.lua，不知为何。
 --env.modimport("modmain2.lua")
 
 

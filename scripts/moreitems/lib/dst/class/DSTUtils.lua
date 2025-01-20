@@ -6,6 +6,7 @@ local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
 
 local class = require("moreitems.lib.thirdparty.middleclass.middleclass")
 local checker = require("moreitems.lib.shihao.module.checker")
+local utils = require("moreitems.lib.shihao.utils")
 
 ---@class DSTUtils
 local DSTUtils = class("DSTUtils")
@@ -17,6 +18,74 @@ function DSTUtils:initialize(env)
     checker.require_not_nil(env)
     self.env = env
 end
+
+local function _add_upgrader_component()
+    -- TODO: 记得查看 tresurechest.lua 和 dragonfly_chest.lua
+    local function getstatus(inst, viewer)
+        return inst._chestupgrade_stacksize and "UPGRADED_STACKSIZE" or nil
+    end
+
+    local function DoUpgradeVisuals(inst)
+        -- DoNothing
+    end
+
+    local function OnUpgrade(inst, performer, upgraded_from_item)
+        local numupgrades = inst.components.upgradeable.numupgrades
+        if numupgrades == 1 then
+            inst._chestupgrade_stacksize = true
+            if inst.components.container ~= nil then -- NOTES(JBK): The container component goes away in the burnt load but we still want to apply builds.
+                inst.components.container:Close()
+                inst.components.container:EnableInfiniteStackSize(true)
+                inst.components.inspectable.getstatus = getstatus
+            end
+            if upgraded_from_item then
+                -- Spawn FX from an item upgrade not from loads.
+                local x, y, z = inst.Transform:GetWorldPosition()
+                local fx = SpawnPrefab("chestupgrade_stacksize_taller_fx")
+                fx.Transform:SetPosition(x, y, z)
+                -- Delay chest visual changes to match fx.
+                local total_hide_frames = 6 -- NOTES(JBK): Keep in sync with fx.lua! [CUHIDERFRAMES]
+                inst:DoTaskInTime(total_hide_frames * FRAMES, DoUpgradeVisuals)
+            else
+                DoUpgradeVisuals(inst)
+            end
+        end
+        inst.components.upgradeable.upgradetype = nil
+
+        if inst.components.lootdropper ~= nil then
+            inst.components.lootdropper:SetLoot({ "alterguardianhatshard" })
+        end
+        -- 2025-01-13-23:30：不需要
+        --inst.components.workable:SetOnWorkCallback(upgrade_onhit)
+        --inst.components.workable:SetOnFinishCallback(upgrade_onhammered)
+        --inst:ListenForEvent("restoredfromcollapsed", OnRestoredFromCollapsed)
+    end
+
+    local function OnLoad(inst, data, newents)
+        if inst.components.upgradeable ~= nil and inst.components.upgradeable.numupgrades > 0 then
+            OnUpgrade(inst)
+        end
+    end
+
+    return function(self, prefab)
+        self.env.AddPrefabPostInit(prefab, function(inst)
+            if not TheWorld.ismastersim then
+                return
+            end
+
+            utils.if_present(inst.components.container, function(container)
+                local upgradeable = inst:AddComponent("upgradeable")
+                upgradeable.upgradetype = UPGRADETYPES.CHEST
+                upgradeable:SetOnUpgradeFn(OnUpgrade)
+                -- This chest cannot burn.
+                inst.OnLoad = OnLoad
+            end)
+        end)
+    end
+end
+
+---设置弹性空间制造器通用函数
+DSTUtils.add_upgrader_component = _add_upgrader_component()
 
 ---@param modulename string
 ---@return table
@@ -107,6 +176,5 @@ function DSTUtils:import_module(modulename, environment)
         return result();
     end
 end
-
 
 return DSTUtils

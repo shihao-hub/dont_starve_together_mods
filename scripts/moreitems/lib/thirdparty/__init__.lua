@@ -1,16 +1,5 @@
-return {
-    dkjson = require("moreitems.lib.thirdparty.dkjson.dkjson"),
-    inspect = require("moreitems.lib.thirdparty.inspect.inspect"),
-    json = require("moreitems.lib.thirdparty.json.json"),
-    luafun = require("moreitems.lib.thirdparty.luafun.fun"),
-    lustache = require("moreitems.lib.thirdparty.lustache.lustache"),
-    middleclass = require("moreitems.lib.thirdparty.middleclass.middleclass"),
-
-    extensions = require("moreitems.lib.thirdparty.extensions"),
-}
-
 --[[
-luafun:
+### luafun
     iter, range, duplicate, tabulate
     take, drop
     filter, grep
@@ -77,3 +66,25 @@ luafun:
         提供了一些常用的操作符函数，例如加法、乘法、比较等。
 
 ]]
+
+
+local third_party_checker = require("moreitems.lib.thirdparty.__shared__").third_party_checker
+
+third_party_checker.check()
+
+local exports = {
+    dkjson = require("moreitems.lib.thirdparty.dkjson.dkjson"),
+    inspect = require("moreitems.lib.thirdparty.inspect.inspect"),
+    json = require("moreitems.lib.thirdparty.json.json"),
+    luafun = require("moreitems.lib.thirdparty.luafun.fun"),
+    lustache = require("moreitems.lib.thirdparty.lustache.lustache"),
+    middleclass = require("moreitems.lib.thirdparty.middleclass.middleclass"),
+
+    extensions = require("moreitems.lib.thirdparty.extensions"),
+}
+
+third_party_checker.revert()
+
+return exports
+
+

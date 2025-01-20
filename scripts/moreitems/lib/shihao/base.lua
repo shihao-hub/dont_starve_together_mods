@@ -11,16 +11,27 @@ local module = {
     log = _log,
 }
 
----将形如 {{ a }} {{ b }} 等格式的字符串全部替换为 tostring(a) 和 tostring(b)
-function module.string_format(str, context)
+local function _string_format(str, context)
     return (string.gsub(str, "{{ *([a-zA-Z_]+) *}}", function(matched)
         return tostring(context[matched])
     end))
 end
 
+---将形如 {{ a }} {{ b }} 等格式的字符串全部替换为 tostring(a) 和 tostring(b)
+function module.string_format(str, context)
+    return _string_format(str, context)
+end
+
 function module.string_format2(template, context)
     return lustache.renderer:render(template, context)
 end
+
+---python f-string
+function module.fs(str, context)
+    return _string_format(str, context)
+end
+
+
 
 -- 这个方法应该是回答了之前的疑问：如果 module.fn1 需要用到 module.fn2，如何避免一不小心写出循环依赖的情况？这种方式应该可以
 local function _bool(val)
@@ -151,17 +162,19 @@ end
 if select("#", ...) == 0 then
     local log = module.log
 
-    log.info(module.string_format("{{name}}", {
-        name = 1
-    }))
+    --log.info(module.string_format("{{name}}", {
+    --    name = 1
+    --}))
+    --
+    ---- base.lua 中用到子目录中的内容是不合理的，但是这里属于测试区域，而且测试区域理论上应该移动到 tests 目录下
+    ---- 应为上面的注释，我选择将 log 放入 base 中
+    ----local log = require("moreitems.lib.shihao.module.log")
+    --log.info(module.string_format("{{ name         }}", { name = "zsh" }))
+    --log.info(module.string_format2("{{name        }}", { name = "zsh" }))
+    --
+    --log.info(module.t_op(true, function() return 111 end, 222))
 
-    -- base.lua 中用到子目录中的内容是不合理的，但是这里属于测试区域，而且测试区域理论上应该移动到 tests 目录下
-    -- 应为上面的注释，我选择将 log 放入 base 中
-    --local log = require("moreitems.lib.shihao.module.log")
-    log.info(module.string_format("{{ name         }}", { name = "zsh" }))
-    log.info(module.string_format2("{{name        }}", { name = "zsh" }))
 
-    log.info(module.t_op(true, function() return 111 end, 222))
 end
 
 return module

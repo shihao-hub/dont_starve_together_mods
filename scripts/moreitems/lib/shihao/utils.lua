@@ -5,16 +5,13 @@
 -- 【待定】其实在我看来，utils 可以囊括所有内容了... 不需要那么多文件，我的模组根本用不到，一把梭即可
 
 local base = require("moreitems.lib.shihao.base")
+local mini_utils = require("moreitems.lib.shihao.mini_utils")
+
 local log = require("moreitems.lib.shihao.module.log")
 local guards = require("moreitems.lib.shihao.module.guards")
 
 -- NOTE: 曾经 setmetatable({}, { __index = function(t, k) return base[k] end })，但是这是副作用，因此我选择避免
-local module = setmetatable({}, {
-    __index = function(t, k)
-        local mini_utils = require("moreitems.lib.shihao.mini_utils")
-        return mini_utils[k]
-    end
-})
+local module = setmetatable({ mini = mini_utils }, { __index = mini_utils })
 
 --module.emojis = { "↑", "↓", "←", "→", "↖", "↗", "↘", "↙", "↕" }
 

@@ -1,5 +1,11 @@
 local string_find, string_split, tostring, type =
-      string.find, string.split, tostring, type
+      string.find, nil, tostring, type
+
+string_split = function(str, sep)
+  local out = {}
+  for m in string.gmatch(str, "[^"..sep.."]+") do out[#out+1] = m end
+  return out
+end
 
 local context = {}
 context.__index = context

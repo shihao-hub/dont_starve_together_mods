@@ -62,7 +62,7 @@ local content = [[
 
 name = L and "更多物品" or "More Items"
 author = "心悦卿兮"
-version = "4.0.1_1"
+version = "4.0.0_1737182566"
 description = _get_description(content)
 
 server_filter_tags = L and { "更多物品" } or { "More Items" }
@@ -99,9 +99,19 @@ local CLOSE = "关闭"
 configuration_options = {
     large_label("------------------v2"),
     {
-        name = "lifeinjector_vb__allow_universal_functionality_enable",
-        label = "允许强心素食堡对所有人物使用",
+        name = "lifeinjector_vb__inherit_when_change_character",
+        label = "原版人物使用强心素食堡换人继承血量",
         hover = "",
+        options = {
+            option(OPEN, true),
+            option(CLOSE, false),
+        },
+        default = true
+    },
+    {
+        name = "lifeinjector_vb__allow_universal_functionality_enable",
+        label = "【谨慎开启】允许强心素食堡对所有人物使用",
+        hover = "作者不对该功能造成的 bug 负责",
         options = {
             option(OPEN, true),
             option(CLOSE, false),

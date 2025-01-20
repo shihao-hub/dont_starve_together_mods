@@ -46,7 +46,8 @@ TUNING.MONE_TUNING = {
     };
     GET_MOD_CONFIG_DATA = {
         lifeinjector_vb__allow_universal_functionality_enable = env.GetModConfigData("lifeinjector_vb__allow_universal_functionality_enable");
-        piggybag__change_image_enable = true,
+        lifeinjector_vb__inherit_when_change_character = env.GetModConfigData("lifeinjector_vb__inherit_when_change_character");
+        piggybag__change_image_enable = env.GetModConfigData("piggybag__change_image_enable"),
 
         -- 2023-09-10
         mone_seasack_capacity_increase = env.GetModConfigData("mone_seasack_capacity_increase");

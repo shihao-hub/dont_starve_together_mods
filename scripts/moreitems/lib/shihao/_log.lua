@@ -84,7 +84,10 @@ function module.error(...)
     -- 不要用 io.stderr，因为没有缓存，会优先打印出来，即使我执行了 io.stdout:flush 也没有用
     --io.stdout:flush()
     --io.stderr:write(debug.traceback(), "\n")
-    static.console(debug.traceback())
+    local traceback = debug.traceback()
+    -- 将 \\ -> /
+    traceback = string.gsub(traceback, "\\", "/")
+    static.console(traceback)
 
     static.console = old_console
 end

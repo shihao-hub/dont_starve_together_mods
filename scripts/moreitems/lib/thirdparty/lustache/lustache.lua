@@ -4,11 +4,12 @@
 
 local string_gmatch = string.gmatch
 
-function string.split(str, sep)
-  local out = {}
-  for m in string_gmatch(str, "[^"..sep.."]+") do out[#out+1] = m end
-  return out
-end
+--2025-01-18
+--function string.split(str, sep)
+--  local out = {}
+--  for m in string_gmatch(str, "[^"..sep.."]+") do out[#out+1] = m end
+--  return out
+--end
 
 local lustache = {
   name     = "lustache",

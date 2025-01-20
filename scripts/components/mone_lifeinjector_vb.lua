@@ -2,41 +2,20 @@
 --- @author zsh in 2023/1/20 14:27
 ---
 
-local base = require("moreitems.main").shihao.base
+
+
 local assertion = require("moreitems.main").shihao.module.assertion
 local stl_table = require("moreitems.main").shihao.module.stl_table
+local base = require("moreitems.main").shihao.base
+local utils = require("moreitems.main").shihao.utils
+local dst_utils = require("moreitems.main").dst.dst_utils
 
-local inherit_when_change_character = true
+local inherit_when_change_character = dst_utils.get_mod_config_data("lifeinjector_vb__inherit_when_change_character")
 
-local interval = {}
----@return table|nil
-local function get_persistent_data(filename)
-    base.log.info("call get_persistent_data", "filename: " .. filename)
-    local res
-    TheSim:GetPersistentString(filename, function(load_success, data)
-        if not load_success or data == nil then
-            base.log.info("not load_success or data == nil")
-            return
-        end
-        local success, saved_data = RunInSandbox(data)
-        if not success then
-            base.log.info("not success")
-            return
-        end
-        res = saved_data
-    end)
-    return res
-end
-
----@param filename string
----@param data table
-local function set_persist_data(filename, data)
-    -- DataDumper(filters, nil, false)
-    --  fastmode 为 false，表示禁用快速模式，生成的 Lua 代码会更加详细和完整。
-    --  astmode 为 true，表示启用快速模式，生成的 Lua 代码会更加简洁，但可能会丢失一些细节。
-    local str = DataDumper(data, nil, true)
-    TheSim:SetPersistentString(filename, str, false)
-end
+local interval = {
+    get_persistent_data = dst_utils.get_persistent_data,
+    set_persist_data = dst_utils.set_persist_data
+}
 
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -70,6 +49,8 @@ end
 local function _set_persist_data_on_init(component, persist_data)
     base.log.info("call _set_persist_data_on_init")
 
+    -- ATTENTION: 构造函数里面执行 _set_persist_data_on_init，修改和查询了 self 的属性，这是不对的！
+
     local self = component
 
     local user = self.inst
@@ -79,7 +60,7 @@ local function _set_persist_data_on_init(component, persist_data)
 
     --base.log.info("1")
 
-    persist_data = base.t_op(persist_data, persist_data, function() get_persistent_data(self:_get_persist_filename()) end)
+    persist_data = base.t_op(persist_data, persist_data, function() interval.get_persistent_data(self:_get_persist_filename()) end)
     if not persist_data then
         return
     end
@@ -106,33 +87,35 @@ local VB = Class(function(self, inst)
     -- init 阶段去查持久化的数据，但是需要限制人物，建议只考虑原版人物
     -- Bug: 需要添加延迟，因为 self.inst.userid 默认值是 ""，执行到此处时还未初始化
     -- NOTE: 此处添加了延迟，因此在构造函数中用到了属于 self 的函数将可以接受了。（构造函数中不推荐调用和 self 有关的函数，比如用到了 self）
-    self.inst:DoTaskInTime(0, function()
-        if not _is_player_included(self.inst.prefab) then
-            return
-        end
+    if inherit_when_change_character then
+        self.inst:DoTaskInTime(0, function()
+            if not _is_player_included(self.inst.prefab) then
+                return
+            end
 
-        assertion.assert_true(_is_player_included(self.inst.prefab))
+            assertion.assert_true(_is_player_included(self.inst.prefab))
 
-        local old_save_maxhealth = self.save_maxhealth
+            local old_save_maxhealth = self.save_maxhealth
 
-        local persist_data = get_persistent_data(self:_get_persist_filename())
+            local persist_data = interval.get_persistent_data(self:_get_persist_filename())
 
-        local _is_changing_character = function()
-            return inherit_when_change_character and self.save_maxhealth ~= persist_data.save_maxhealth
-        end
+            utils.if_present(persist_data, function()
+                -- 判断是否换人，这个条件就可以，因为换人之后，是全新的组件。如果没换人，那会调用 OnLoad
+                local is_changing_character = old_save_maxhealth ~= persist_data.save_maxhealth
 
-        local is_changing_character = _is_changing_character()
+                if not is_changing_character then
+                    base.log.info("not is_changing_character")
+                    return
+                end
 
-        if not is_changing_character then
-            base.log.info("not is_changing_character", old_save_maxhealth, self.save_maxhealth)
-            return
-        end
+                -- 如果是换人，才执行下面的逻辑。也就是继承之前保存的数据。
+                _set_persist_data_on_init(self, persist_data)
 
-        _set_persist_data_on_init(self, persist_data)
-
-        base.log.info("is_changing_character", old_save_maxhealth, self.save_maxhealth)
-        self:HPIncreaseOnLoad()
-    end)
+                base.log.info("is_changing_character", old_save_maxhealth, persist_data.save_maxhealth)
+                self:HPIncreaseOnLoad()
+            end)
+        end)
+    end
 
     -- 注意 OnLoad 函数会在游戏重新加载时执行，具体查看 entityscript.lua:SetPersistData
 end, nil, {
@@ -142,6 +125,10 @@ end, nil, {
 function VB:_get_persist_filename()
     base.log.info("call _get_persist_filename")
     return "lifeinjector_vb_" .. (self.inst.userid or "default")
+end
+
+function VB:_character_has_eaten()
+    return self.eatnum ~= 0
 end
 
 function VB:HPIncrease()
@@ -182,8 +169,8 @@ function VB:OnSave()
         因此添加 if data.eatnum ~= 0 then 判断条件。
         这个判断条件保证了序列化数据的不会被破坏
     ]]
-    if data.eatnum ~= 0 and _is_player_included(self.inst.prefab) then
-        set_persist_data(self:_get_persist_filename(), data)
+    if self:_character_has_eaten() and _is_player_included(self.inst.prefab) then
+        interval.set_persist_data(self:_get_persist_filename(), data)
     end
     return data
 end
@@ -197,7 +184,7 @@ function VB:OnLoad(data)
             self.save_currenthealth = data.save_currenthealth;
             self.save_maxhealth = data.save_maxhealth;
             -- 没吃过就不会失效。
-            if data.eatnum ~= 0 then
+            if self:_character_has_eaten() then
                 self:HPIncreaseOnLoad();
             end
         end

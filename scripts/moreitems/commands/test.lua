@@ -1,9 +1,12 @@
+local lfs = require("lfs") -- Lua for Windows
+
 local luafun = require("moreitems.lib.thirdparty.luafun.fun")
 local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
 
 local assertion = require("moreitems.lib.shihao.module.assertion")
 local base = require("moreitems.lib.shihao.base")
 local stl_string = require("moreitems.lib.shihao.module.stl_string")
+local stl_table = require("moreitems.lib.shihao.module.stl_table")
 local utils = require("moreitems.lib.shihao.utils")
 
 local current_file_basename = (debug.getinfo(1, "S").source:gsub(".*[/\\]", "", 1))
@@ -12,8 +15,6 @@ local current_file_basename = (debug.getinfo(1, "S").source:gsub(".*[/\\]", "", 
 
 return setmetatable({
     Helper = function()
-        local lfs = require("lfs") -- Lua for Windows
-
         local this = {}
 
         local function list_files(directory)
@@ -48,6 +49,9 @@ return setmetatable({
                     if stl_string.endswith(directory, "commands") then
                         return
                     end
+                    if stl_string.endswith(directory, "tests") then
+                        return
+                    end
 
                     -- file 是 directory 下的相对路径（没有 ./ 的相对路径）
                     local full_path = directory .. '/' .. file  -- 获取完整路径
@@ -73,7 +77,7 @@ return setmetatable({
 
             return Stream.of(res)
                          :map(function(e) return e:gsub("/", "\\") end)
-                         :filter(function(e) return stl_string.endswith(e, ".lua") and not stl_string.endswith(e, "commands.lua") end)
+                         :filter(function(e) return stl_string.endswith(e, ".lua") and not stl_string.endswith(e, "commands.lua") and not stl_string.endswith(e, "automation.lua") end)
                          :totable()
         end
 
@@ -90,6 +94,28 @@ return setmetatable({
     __call = function(t)
         local helper = t.Helper()
 
+        -- ATTENTION: 测试时，记得将 commands 目录和 commands.lua 文件排除！
+
+        -- setup
+        -- 将 settings 中的 DEBUG 和 TEST_ENABLED 修改
+        --local filepath = lfs.currentdir() .. "\\moreitems" .. "\\settings.lua"
+        --local settings_file = io.open(filepath, "r")
+        --assert(settings_file ~= nil)
+        --local old_content = settings_file:read("*a")
+        --settings_file:close()
+        --
+        --settings_file = io.open(filepath, "w")
+        --local replacements = {
+        --    ["module%.DEBUG%s*=.+"] = "module.DEBUG = true",
+        --    ["module%.TEST_ENABLED%s*=.+"] = "module.TEST_ENABLED = true"
+        --}
+        --local pattern = table.concat(stl_table.keys(replacements, true), "|")
+        --settings_file:write(string.gsub(old_content, pattern, function(matched)
+        --    print(matched)
+        --    return matched
+        --end))
+        --settings_file:close()
+
         local files = helper.find_all_matched_lua_files()
         --print(inspect.inspect(files))
         for _, filename in ipairs(files) do
@@ -98,5 +124,11 @@ return setmetatable({
             local command = base.string_format("lua.exe \"{{filename}}\"", { filename = filename })
             os.execute(command)
         end
+
+        -- tear down
+        --settings_file = io.open(filepath, "w")
+        --settings_file:write(old_content)
+        --settings_file:close()
+
     end
 })
