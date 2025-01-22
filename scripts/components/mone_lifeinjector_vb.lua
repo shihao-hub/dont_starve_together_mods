@@ -4,7 +4,7 @@
 
 
 
-local assertion = require("moreitems.main").shihao.module.assertion
+local assertion = require("moreitems.main").shihao.assertion
 local stl_table = require("moreitems.main").shihao.module.stl_table
 local base = require("moreitems.main").shihao.base
 local utils = require("moreitems.main").shihao.utils
@@ -60,7 +60,7 @@ local function _set_persist_data_on_init(component, persist_data)
 
     --base.log.info("1")
 
-    persist_data = base.t_op(persist_data, persist_data, function() interval.get_persistent_data(self:_get_persist_filename()) end)
+    persist_data = base.if_then_else(persist_data, function() return persist_data end, function() interval.get_persistent_data(self:_get_persist_filename()) end)
     if not persist_data then
         return
     end

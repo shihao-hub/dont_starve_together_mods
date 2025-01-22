@@ -1,1 +1,0 @@
-return require("moreitems.lib.shihao.module._unittest.__init__")

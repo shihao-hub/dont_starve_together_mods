@@ -27,7 +27,7 @@ function module.get_empty_array()
 end
 
 if select("#", ...) == 0 then
-    local assertion = require("moreitems.lib.shihao.module.assertion")
+    local assertion = require("moreitems.lib.shihao.assertion")
 
     local stl_string = require("moreitems.lib.shihao.module.stl_string")
 

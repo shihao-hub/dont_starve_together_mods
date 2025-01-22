@@ -146,7 +146,7 @@ module.hook_fn = _generate_hook_fn()
 
 if select("#", ...) == 0 then
 
-    local assertion = require("moreitems.lib.shihao.module.assertion")
+    local assertion = require("moreitems.lib.shihao.assertion")
     --[[ hook ]]
     xpcall(function()
         local fn1 = function() end

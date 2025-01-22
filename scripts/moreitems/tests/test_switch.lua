@@ -1,4 +1,4 @@
-local checker = require("moreitems.main").shihao.module.checker
+local guard = require("moreitems.main").shihao.module.guard
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ function internal.switch(condition)
         if branch == nil then
             branch = function() end
         end
-        checker.check_function(branch)
+        guard.check_function(branch)
         return branch()
     end
 end

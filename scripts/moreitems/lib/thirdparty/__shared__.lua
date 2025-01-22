@@ -50,7 +50,7 @@ local function _third_party_checker()
     if __main__ then
         -- NOTE: 测试中使用的库不需要放在文件开头
         local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
-        local assertion = require("moreitems.lib.shihao.module.assertion")
+        local assertion = require("moreitems.lib.shihao.assertion")
 
         local base = require("moreitems.lib.shihao.base")
         local utils = require("moreitems.lib.shihao.utils")

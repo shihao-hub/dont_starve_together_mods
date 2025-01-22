@@ -3,7 +3,7 @@ local lfs = require("lfs") -- Lua for Windows
 local luafun = require("moreitems.lib.thirdparty.luafun.fun")
 local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
 
-local assertion = require("moreitems.lib.shihao.module.assertion")
+local assertion = require("moreitems.lib.shihao..assertion")
 local base = require("moreitems.lib.shihao.base")
 local stl_string = require("moreitems.lib.shihao.module.stl_string")
 local stl_table = require("moreitems.lib.shihao.module.stl_table")

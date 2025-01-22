@@ -7,41 +7,33 @@
 local base = require("moreitems.lib.shihao.base")
 local mini_utils = require("moreitems.lib.shihao.mini_utils")
 
-local log = require("moreitems.lib.shihao.module.log")
-local guards = require("moreitems.lib.shihao.module.guards")
+local log = base.log
+local guard = require("moreitems.lib.shihao.module.guard")
+
+
+
 
 -- NOTE: 曾经 setmetatable({}, { __index = function(t, k) return base[k] end })，但是这是副作用，因此我选择避免
 local module = setmetatable({ mini = mini_utils }, { __index = mini_utils })
 
 --module.emojis = { "↑", "↓", "←", "→", "↖", "↗", "↘", "↙", "↕" }
 
--- Legacy compatibility: 运用重构将相关位置替换后，就会注释掉。这就是重构的魅力，改错！
+-- Legacy compatibility:
+--  运用重构将相关位置替换后，就会注释掉。这就是重构的魅力，改错！
+--  此处存在的原因是，最初一些不知道归类到哪些地方的函数统一都放在 utils 里面了！utils 毕竟太通用了...
 --module.get_call_location = stl_debug.get_call_location
 --module.switch = base.switch
-module.if_present = guards.if_present
-module.if_present_or_else = guards.if_present_or_else
-
-
-------------------------------------------------------------------------------------------------------------------------
-
-local function _invoke(fn, ...)
-    return fn(...)
-end
-
--- Question: 如果 get_varargs 变成 public，岂不是在 utils 中出现了循环依赖？这种问题如何解决为好呢？
--- Answer: 以下列方式可以解决，只要保证 _get_varargs 不要用到 module 中的方法即可
-local function _get_varargs(...)
-    return { n = select("#", ...), ... }
-end
+module.if_present = guard.if_present
+module.if_present_or_else = guard.if_present_or_else
+module.invoke = guard.invoke
+module.invoke_safe = guard.invoke_safe
 
 local function _iter_varargs(process_each_element, ...)
-    local args = _get_varargs(...)
+    local args = { n = select("#", ...), ... }
     for i = 1, args.n do
         process_each_element(args[i])
     end
 end
-
-------------------------------------------------------------------------------------------------------------------------
 
 local function _do_nothing()
 
@@ -60,12 +52,8 @@ function module.generate_set(values)
     return res
 end
 
-function module.get_varargs(...)
-    return _get_varargs(...)
-end
-
 function module.all_null(...)
-    local args = _get_varargs(...)
+    local args = { n = select("#", ...), ... }
     for i = 1, args.n do
         if args[i] ~= nil then
             return false
@@ -75,7 +63,7 @@ function module.all_null(...)
 end
 
 function module.oneof_null(...)
-    local args = _get_varargs(...)
+    local args = { n = select("#", ...), ... }
     for i = 1, args.n do
         if args[i] == nil then
             return true
@@ -94,45 +82,6 @@ function module.get_module_env()
     mt.__index = _G
     setmetatable(res, mt)
     return res
-end
-
----直接调用 fn 函数
----大部分使用场景为匿名函数，因为存在 upvalue，其实 `...` 可变参数应该没有什么存在的价值。
----因为对于 lua 而言，upvalue 我可以认为是参数输出，即指针
-function module.invoke(fn, ...)
-    return _invoke(fn, ...)
-end
-
-function module.invoke_safe(fn, ...)
-    local res
-    local args = _get_varargs(...)
-    xpcall(function()
-        res = _invoke(fn, unpack(args, 1, args.n))
-    end, function(msg)
-        log.error(msg)
-    end)
-    return res
-end
-
--------------------------------------------------------------------------------
----使用注意事项：
----1. 只能在 for 循环中使用（建议在大量循环时使用，比如五百次以上、上千次、上万次循环）
----2. loop_cache 每次循环都是同一个
----3. fn 不允许存在 for 循环中会发生变化的上值
----
----总结，本方法是在需要优化的时候才能使用的方法，因为第 2 点和第 3 点的条件过于苛刻，容易出错。
--------------------------------------------------------------------------------
-function module.__invoke_for_loop(loop_cache, fn, ...)
-    -- NOTE: 这个实现方式是有问题的，因为与其这样，那我还在循环中创建函数干嘛？移出去定义一次不就行了？
-    local args = _get_varargs(...)
-    local key = ""
-    for i = 1, args.n do
-        key = key .. tostring(args[i])
-    end
-    if loop_cache[key] == nil then
-        loop_cache[key] = fn
-    end
-    return _invoke(loop_cache[key], ...)
 end
 
 ---打印某个函数的执行消耗时间

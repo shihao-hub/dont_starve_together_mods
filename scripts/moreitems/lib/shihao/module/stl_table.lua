@@ -4,6 +4,7 @@
 
 local base = require("moreitems.lib.shihao.base")
 
+local _shihao_shared = require("moreitems.lib.shihao.__shared__")
 local _shared = require("moreitems.lib.shihao.module.__shared__")
 
 -- 注意，此处的函数第一个参数必定都是 table
@@ -79,11 +80,7 @@ function module.is_sparse_array(t)
     return false
 end
 
----用 table.maxn 判断两个 table。如果长度不一样，那就不相等，如果一样，那就遍历比较。
----@return boolean,number 第二个返回值在不相等时，返回未匹配的那个 index。
-function module.array_equals(array1, array2)
-    return _shared.array_equals(array1, array2)
-end
+module.array_equals = _shihao_shared.array_equals
 
 function module.reverse(t)
     local size = table.maxn(t)
@@ -121,7 +118,7 @@ end
 
 if select("#", ...) == 0 then
     local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
-    local assertion = require("moreitems.lib.shihao.module.assertion")
+    local assertion = require("moreitems.lib.shihao.assertion")
 
     local test_z = function()
         print(module.is_sparse_array({ 1, 2, 3, nil, 5 }))

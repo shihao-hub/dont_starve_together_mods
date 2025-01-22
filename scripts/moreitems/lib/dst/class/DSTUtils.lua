@@ -5,9 +5,11 @@
 local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
 
 local class = require("moreitems.lib.thirdparty.middleclass.middleclass")
-local checker = require("moreitems.lib.shihao.module.checker")
+local guard = require("moreitems.lib.shihao.module.guard")
 local utils = require("moreitems.lib.shihao.utils")
 
+-- TODO: DSTUtils 改成 DSTModEnvUtils/DSTModEnvService（指每个函数都需要用到 mod env）
+-- TODO: 请区分 utils 和 service 的区别！
 ---@class DSTUtils
 local DSTUtils = class("DSTUtils")
 
@@ -15,7 +17,7 @@ local DSTUtils = class("DSTUtils")
 ---@param env env
 function DSTUtils:initialize(env)
     print(inspect(env))
-    checker.require_not_nil(env)
+    guard.require_not_nil(env)
     self.env = env
 end
 

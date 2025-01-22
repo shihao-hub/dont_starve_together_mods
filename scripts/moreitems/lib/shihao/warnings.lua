@@ -1,7 +1,7 @@
 -- 本来该文件放在 module 目录下的，但是 log.lua 也在 module 下，所以将 warnings.lua 移到上一层
 
-local log = require("moreitems.lib.shihao.module.log")
 local base = require("moreitems.lib.shihao.base")
+local log = base.log
 local stl_debug = require("moreitems.lib.shihao.module.stl_debug")
 
 local module = {}

@@ -7,6 +7,10 @@ local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
 
 local _log = require("moreitems.lib.shihao._log")
 
+-- NOTE:
+--  当初 log 转移的时候，为了偷懒保证兼容性，就代码并为删除，而是委托给 base.log，这不好！
+--  应该及时重构，而在这个过程中，我深刻体会到为什么说测试覆盖越多，编程效率越快了！
+--  测试覆盖越多，代码改动的时候越不会犹犹豫豫！
 local module = {
     log = _log,
 }
@@ -45,13 +49,6 @@ function module.bool(val)
     return _bool(val)
 end
 
--- FIXME: 这将不存在短路特性了 
-function module.ternary_operator(condition, expression1, expression2)
-    if _bool(condition) then
-        return expression1
-    end
-    return expression2
-end
 
 -- 大致简单模仿了 js 的参数归一化
 local function _normalize_parameter(arg)
@@ -84,10 +81,15 @@ local function _normalize_parameter(arg)
     return obj
 end
 
-function module.t_op(condition, expression_or_lazy_fn1, expression_or_lazy_fn2)
+function module.if_then_else(condition, expression_or_lazy_fn1, expression_or_lazy_fn2)
+    -- 新想法：推荐始终使用 lazy_fn
+    assert(type(expression_or_lazy_fn1) == "function")
+    assert(type(expression_or_lazy_fn2) == "function")
+
     local arg2 = _normalize_parameter(expression_or_lazy_fn1)
     local arg3 = _normalize_parameter(expression_or_lazy_fn2)
 
+    -- 不允许发生误解，一律转为 boolean 类型
     if _bool(condition) then
         return arg2:get()
     end
@@ -96,6 +98,7 @@ end
 
 ---switch 只支持 string（YAGNI！KISS！），因为单纯我自己使用，只支持 string 即可
 ---软件是在需求中迭代出来的，我不是学术人才，做不到空想就能写出完美 api
+---@param condition string
 function module.switch(condition)
     --[[
         形如 jdk17：
@@ -160,7 +163,8 @@ function module.is_userdata(v)
 end
 
 if select("#", ...) == 0 then
-    local log = module.log
+    -- 2025-01-23：在测试中使用这个，不会导致循环依赖！因为 require 的时候不会执行这个判断语句！Python 妙哉！
+    local assertion = require("moreitems.lib.shihao.assertion")
 
     --log.info(module.string_format("{{name}}", {
     --    name = 1
@@ -168,13 +172,20 @@ if select("#", ...) == 0 then
     --
     ---- base.lua 中用到子目录中的内容是不合理的，但是这里属于测试区域，而且测试区域理论上应该移动到 tests 目录下
     ---- 应为上面的注释，我选择将 log 放入 base 中
-    ----local log = require("moreitems.lib.shihao.module.log")
     --log.info(module.string_format("{{ name         }}", { name = "zsh" }))
     --log.info(module.string_format2("{{name        }}", { name = "zsh" }))
     --
     --log.info(module.t_op(true, function() return 111 end, 222))
 
+    --[[ module.switch ]]
+    xpcall(function()
+        local switch = module.switch
 
+        local res = switch("123") {
+            ["123"] = function() return 123 end
+        }
+        assertion.assert_true(res == 123)
+    end, function(msg) io.stderr:write(msg, "\n") end)
 end
 
 return module

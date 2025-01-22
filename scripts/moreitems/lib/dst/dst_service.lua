@@ -5,8 +5,9 @@
 -- dst service logic utils
 -- 即此处的函数与业务逻辑强相关，比如和 prefab fn 强相关
 
-local log = require("moreitems.lib.shihao.module.log")
 local base = require("moreitems.lib.shihao.base")
+local log = base.log
+
 
 local module = {}
 local cache = {}

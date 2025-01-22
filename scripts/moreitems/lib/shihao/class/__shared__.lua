@@ -1,3 +1,3 @@
-return {
+local module = {}
 
-}
+return module
