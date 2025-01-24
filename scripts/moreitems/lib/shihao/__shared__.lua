@@ -23,7 +23,7 @@ function module.array_equals(array1, array2)
     local len2 = table.maxn(array2)
 
     if len1 ~= len2 then
-        return false
+        return false, 1
     end
 
     for i = 1, len1 do
