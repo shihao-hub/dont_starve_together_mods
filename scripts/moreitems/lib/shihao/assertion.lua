@@ -29,10 +29,9 @@ function module.off()
 end
 
 ---验证两个数组是否相等（元素相同且顺序一致）
+---@overload fun(expected:table[], actual:table[])
 function module.assert_array_equals(expected, actual, case)
-    if _is_disabled() then
-        return
-    end
+    if _is_disabled() then return end
 
     if not base.is_table(expected) or not base.is_table(actual) then
         error("The expected and actual arguments must be table type.")
@@ -42,7 +41,8 @@ function module.assert_array_equals(expected, actual, case)
     if equal then
         return
     end
-    error(base.string_format("AssertionFailedError: Message ==> Array contents differ at index {{index}}, expected: {{expected}} but was: {{actual}}. {{case_str}}", {
+
+    error(base.string_format("AssertionFailedError: Message ==> Array contents differ at index `{{index}}`, expected: `{{expected}}` but was: `{{actual}}`. {{case_str}}", {
         index = index,
         expected = insepect.inspect(expected, { newline = "" }),
         actual = insepect.inspect(actual, { newline = "" }),
@@ -50,11 +50,28 @@ function module.assert_array_equals(expected, actual, case)
     }), 2)
 end
 
----验证条件是否为 true
-function module.assert_true(condition, case)
-    if _is_disabled() then
+---@param expected string
+---@param actual string
+function module.assert_string_equals(expected, actual)
+    if _is_disabled() then return end
+
+    if not base.is_string(expected) or not base.is_string(actual) then
+        error("The expected and actual arguments must be string type.")
+    end
+
+    if expected == actual then
         return
     end
+    error(base.string_format("AssertionFailedError: Message ==> expected: `{{expected}}` but was: `{{actual}}`.", {
+        expected = expected,
+        actual = actual,
+    }), 2)
+end
+
+---验证条件是否为 true
+---@overload fun(condition:boolean)
+function module.assert_true(condition, case)
+    if _is_disabled() then return end
 
     if condition == true then
         return
@@ -63,10 +80,9 @@ function module.assert_true(condition, case)
 end
 
 ---验证条件是否为 false
+---@overload fun(condition:boolean)
 function module.assert_false(condition, case)
-    if _is_disabled() then
-        return
-    end
+    if _is_disabled() then return end
 
     if condition == false then
         return
@@ -75,10 +91,9 @@ function module.assert_false(condition, case)
 end
 
 ---验证值是否为 nil
+---@overload fun(value:any)
 function module.assert_nil(value, case)
-    if _is_disabled() then
-        return
-    end
+    if _is_disabled() then return end
 
     if value == nil then
         return
@@ -87,10 +102,9 @@ function module.assert_nil(value, case)
 end
 
 ---验证值是否不为 nil
+---@overload fun(value:any)
 function module.assert_not_nil(value, case)
-    if _is_disabled() then
-        return
-    end
+    if _is_disabled() then return end
 
     if value ~= nil then
         return
@@ -98,12 +112,37 @@ function module.assert_not_nil(value, case)
     error("AssertionFailedError: Message ==> Expected value to not be null." .. _get_case_str(case), 2)
 end
 
+
+-- 这会导致 error 不提示出错位置！有问题！
+--local function _wrap_assert_functions()
+--    for k, v in pairs(module) do
+--        if base.is_string(k) and base.is_function(v) and k:sub(1, 7) == "assert_" then
+--            module[k] = function(...)
+--                if _is_disabled() then
+--                    return
+--                end
+--                return v(...)
+--            end
+--        end
+--    end
+--end
+
+--_wrap_assert_functions()
+
 if __main__ then
     local function error_print(message)
         io.stderr:write(message, "\n")
     end
 
     -- 2025-01-18：此处多个 xpcall 是为了单独测试
+
+    --[[ on | off ]]
+    -- 如果失效了，则会报错。
+    module.off()
+    xpcall(function()
+        module.assert_true(false)
+    end, error_print)
+    module.on()
 
     --[[ assert_array_equals ]]
     xpcall(function()
