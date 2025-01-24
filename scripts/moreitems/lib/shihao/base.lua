@@ -15,27 +15,15 @@ local module = {
     log = _log,
 }
 
-local function _string_format(str, context)
-    return (string.gsub(str, "{{ *([a-zA-Z_]+) *}}", function(matched)
+local function _string_format(template, context)
+    return (string.gsub(template, "{{ *([a-zA-Z_]+) *}}", function(matched)
         return tostring(context[matched])
     end))
 end
 
----将形如 {{ a }} {{ b }} 等格式的字符串全部替换为 tostring(a) 和 tostring(b)
-function module.string_format(str, context)
-    return _string_format(str, context)
-end
-
-function module.string_format2(template, context)
+local function _string_format2(template, context)
     return lustache.renderer:render(template, context)
 end
-
----python f-string
-function module.fs(str, context)
-    return _string_format(str, context)
-end
-
-
 
 -- 这个方法应该是回答了之前的疑问：如果 module.fn1 需要用到 module.fn2，如何避免一不小心写出循环依赖的情况？这种方式应该可以
 local function _bool(val)
@@ -45,13 +33,8 @@ local function _bool(val)
     return true
 end
 
-function module.bool(val)
-    return _bool(val)
-end
-
-
 -- 大致简单模仿了 js 的参数归一化
-local function _normalize_parameter(arg)
+local function _normalize_parameter_of_if_then_else(arg)
     -- JS:
     --  如果是函数，则设置返回的 get = arg, set = function() error("xxx was assigned to but it has no setter.") end
     --  如果不是函数，则设置返回的 get = arg.get, set = arg.set
@@ -68,9 +51,12 @@ local function _normalize_parameter(arg)
 
     local obj = {}
 
-    obj._value = arg()
+    obj._value = nil
 
     function obj:get()
+        if self._value == nil then
+            self._value = arg()
+        end
         return self._value
     end
 
@@ -81,13 +67,27 @@ local function _normalize_parameter(arg)
     return obj
 end
 
+---将形如 {{ a }} {{ b }} 等格式的字符串全部替换为 tostring(a) 和 tostring(b)
+function module.string_format(template, context)
+    return _string_format(template, context)
+end
+
+---python f-string
+function module.f_string(str, context)
+    return _string_format(str, context)
+end
+
+function module.bool(val)
+    return _bool(val)
+end
+
 function module.if_then_else(condition, expression_or_lazy_fn1, expression_or_lazy_fn2)
     -- 新想法：推荐始终使用 lazy_fn
     assert(type(expression_or_lazy_fn1) == "function")
     assert(type(expression_or_lazy_fn2) == "function")
 
-    local arg2 = _normalize_parameter(expression_or_lazy_fn1)
-    local arg3 = _normalize_parameter(expression_or_lazy_fn2)
+    local arg2 = _normalize_parameter_of_if_then_else(expression_or_lazy_fn1)
+    local arg3 = _normalize_parameter_of_if_then_else(expression_or_lazy_fn2)
 
     -- 不允许发生误解，一律转为 boolean 类型
     if _bool(condition) then
@@ -128,6 +128,12 @@ function module.switch(condition)
         check_value_type(branch, "function")
         return branch()
     end
+end
+
+---需要保证整个 for 循环体的逻辑全放在 fn 里面
+---@return boolean true 为 break，false/nil 为 continue
+function module.continue_or_break(fn)
+    return fn()
 end
 
 function module.is_nil(v)
