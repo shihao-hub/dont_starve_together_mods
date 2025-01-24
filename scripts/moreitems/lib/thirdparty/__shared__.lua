@@ -2,6 +2,8 @@ local settings = require("moreitems.settings")
 
 local __main__ = select("#", ...) == 0
 
+local module = {}
+
 local function _third_party_checker()
     -- lustache lib adds a new function to the `string` table,
     -- which causes the original function to be overridden.
@@ -73,6 +75,6 @@ local function _third_party_checker()
     return module
 end
 
-return {
-    third_party_checker = _third_party_checker()
-}
+module.third_party_checker = _third_party_checker()
+
+return module
