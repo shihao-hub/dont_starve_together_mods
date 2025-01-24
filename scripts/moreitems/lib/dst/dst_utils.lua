@@ -145,18 +145,18 @@ end]]
 module.hook_fn = _generate_hook_fn()
 
 if select("#", ...) == 0 then
-
     local assertion = require("moreitems.lib.shihao.assertion")
+
     --[[ hook ]]
     xpcall(function()
         local fn1 = function() end
         local new_fn1_1 = function() end
         local new_fn1_2 = function() end
         local new_fn1_3 = function() end
-        print("      fn1:", fn1)
-        print("new_fn1_1:", new_fn1_1)
-        print("new_fn1_2:", new_fn1_2)
-        print("new_fn1_3:", new_fn1_3)
+        --print("      fn1:", fn1)
+        --print("new_fn1_1:", new_fn1_1)
+        --print("new_fn1_2:", new_fn1_2)
+        --print("new_fn1_3:", new_fn1_3)
         local _new_fn1_1 = module.hook_fn(fn1, function(old_fn)
             return new_fn1_1
         end, "fn1")
