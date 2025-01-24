@@ -6,28 +6,55 @@
 local base = require("moreitems.lib.shihao.base")
 
 local module = {}
+local static = {}
+
+static.IllegalArgumentException = "IllegalArgumentException"
+static.NotImpletedException = "NotImpletedException"
 
 ---@param error_msg string
-local function get_exception_name(error_msg)
+local function _get_exception_name(error_msg)
     local name = error_msg:match("^.*Exception: ")
     assert(type(name) ~= "boolean")
     return base.if_then_else(name == nil, function() return name end, function() return name:sub(1, -3) end)
 end
 
 ---@param error_msg string
-function module.is_IllegalArgumentException(error_msg)
-    local name = get_exception_name(error_msg)
+---@param target_exception_name string
+local function is_exception(error_msg, target_exception_name)
+    local name = _get_exception_name(error_msg)
     if name == nil then
         return false
     end
-    return name == "IllegalArgumentException"
+    return name == static[target_exception_name]
 end
 
----@overload fun(msg:string)
+---@param msg string
+---@param level number
+---@param exception_name string
+local function throw_exception(msg, level, exception_name)
+    level = level and level + 2 or 3 -- please make sure that the type of `level` is not a boolean.
+    msg = base.if_then_else(msg, function()
+        return static[exception_name] .. ": " .. msg
+    end, function()
+        return static[exception_name]
+    end)
+    error(msg, level)
+end
+
+function module.is_IllegalArgumentException(error_msg)
+    return is_exception(error_msg, "IllegalArgumentException")
+end
+
 function module.throw_IllegalArgumentException(msg, level)
-    level = base.if_then_else(level, function() return level end, function() return 1 end)
-    msg = base.if_then_else(msg, function() return msg end, function() return "" end)
-    error("IllegalArgumentException: " .. msg, level)
+    throw_exception(msg, level, "IllegalArgumentException")
+end
+
+function module.is_NotImpletedException(error_msg)
+    return is_exception(error_msg, "NotImpletedException")
+end
+
+function module.throw_NotImpletedException(msg, level)
+    throw_exception(msg, level, "NotImpletedException")
 end
 
 if select("#", ...) == 0 then
