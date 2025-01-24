@@ -457,11 +457,11 @@ if select("#", ...) == 0 then
     --log.disable_flush()
 
     --[[ range ]]
-    xpcall(function()
-        for i in module.range(10) do
-            print(i)
-        end
-    end, print)
+    --xpcall(function()
+    --    for i in module.range(10) do
+    --        print(i)
+    --    end
+    --end, print)
 end
 
 return module
