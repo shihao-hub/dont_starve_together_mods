@@ -3,7 +3,12 @@
 ---
 
 
+local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
+
 local base = require("moreitems.lib.shihao.base")
+local assertion = require("moreitems.lib.shihao.assertion")
+
+
 
 -- NOTE: `__shared__.lua`
 -- when one file needs to use another file that belongs to the same directory,
@@ -12,7 +17,13 @@ local base = require("moreitems.lib.shihao.base")
 local shared = require("moreitems.lib.shihao.module.__shared__")
 
 -- 注意，此处的函数第一个参数必定都是 string
-local module = {}
+local module = { unittests = {} }
+
+function module.unittests.split()
+    local str = "123456"
+    assertion.assert_true(inspect(module.split(str, "")) == "{ \"1\", \"2\", \"3\", \"4\", \"5\", \"6\" }")
+    assertion.assert_array_equals(module.split("1;2;3;4;5;", ";"), { "1", "2", "3", "4", "5" })
+end
 
 ---@return table[]
 function module.split(str, sep)
@@ -36,12 +47,32 @@ function module.split(str, sep)
     return fields
 end
 
+function module.unittests.startswith()
+    local str, prefix = "123456789", "123456"
+    assertion.assert_true(module.startswith(str, prefix))
+end
+
 function module.startswith(str, prefix)
     return string.sub(str, 1, string.len(prefix)) == prefix
 end
 
+function module.unittests.endswith()
+    local test_cases = {
+        { "789", "89" },
+        --{ "9", "89" },
+    }
+    for _, case in ipairs(test_cases) do
+        assertion.assert_true(module.endswith(unpack(case, 1, table.maxn(case))), case)
+    end
+end
+
 function module.endswith(str, suffix)
     return string.sub(str, -string.len(suffix), -1) == suffix
+end
+
+function module.unittests.strip()
+    assertion.assert_true(module.strip("  123  ") == "123")
+    assertion.assert_true(module.strip("123---456", "123456") == "---")
 end
 
 ---默认移除空白字符，但你可以传入一个字符串，指定要移除的字符集。
@@ -49,10 +80,19 @@ end
 function module.strip(str, chars)
     if chars then
         -- NOTE: Lua 的模式匹配值得深入学习，在我的记忆中，它并不是正则表达式，而是自己实现的，代码量不多，功能足够强大
-        local pattern = base.fs("^[{{chars}}]*(.-)[{{chars}}]*$", { chars = chars })
+        local pattern = base.f_string("^[{{chars}}]*(.-)[{{chars}}]*$", { chars = chars })
         return str:gsub(pattern, "%1")
     end
     return str:gsub("^%s*(.-)%s*$", "%1")
+end
+
+function module.unittests.is_integer()
+    assertion.assert_true(module.is_integer("12345") == true)
+    assertion.assert_true(module.is_integer("12345a") == false)
+    assertion.assert_true(module.is_integer("aaa") == false)
+    assertion.assert_true(module.is_integer("12345.") == false)
+    assertion.assert_true(module.is_integer("12345.0") == false)
+    assertion.assert_true(module.is_integer("12345.0a") == false)
 end
 
 ---@param str string
@@ -61,7 +101,7 @@ function module.is_integer(str)
     if str:find("%.") then
         return false
     end
-    -- 无法 tonumber 居然返回 nil，而不是直接报错
+    -- 为什么 tonumber 居然返回 nil，而不是直接报错
     local res = tonumber(str)
     if not res then
         return false
@@ -69,23 +109,41 @@ function module.is_integer(str)
     return true, res
 end
 
+function module.unittests.is_float()
+    assertion.assert_true(module.is_float("12345") == false)
+    assertion.assert_true(module.is_float("12345a") == false)
+    assertion.assert_true(module.is_float("12345.") == false)
+    assertion.assert_true(module.is_float("12345.1") == true)
+end
+
 ---@param str string
 function module.is_float(str)
     if not str:find("%.") then
         return false
     end
-    local success, result = pcall(function()
-        return tonumber(str)
-    end)
-    if not success then
+    local res = tonumber(str)
+    if not res or not tostring(res):find("%.") then
         return false
     end
-    return true, result
+    return true, res
 end
 
 if select("#", ...) == 0 then
+    local unittest = require("moreitems.lib.shihao.module.unittest")
+
+    unittest.run_unittests(module.unittests)
+
     -- 在 Lua 5.1 及之前的版本中，`table.maxn` 函数确实可以用来获取一个表的最大整数索引
     --print(table.maxn({ nil, nil, nil, 1, 2, 3, nil, 5, nil, 7, nil, nil, 10, nil }))
+
+    print(module.is_float("123."))
+
+    --xpcall(function()
+    --    assertion.assert_true(module.is_float("12345.1") == false)
+    --end,function(msg)
+    --    print(msg)
+    --end)
+
 end
 
 return module
