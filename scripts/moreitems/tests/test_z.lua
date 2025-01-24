@@ -2,6 +2,9 @@
 --- DateTime: 2025/1/6 20:42
 ---
 
+local inspect = require("moreitems.lib.thirdparty.inspect.inspect")
+
+local stl_string = require("moreitems.lib.shihao.module.stl_string")
 
 --local function get_user(userid)
 --    for _, ent in pairs(Ents) do
@@ -23,3 +26,6 @@
 --local function get_user(userid) for _, ent in pairs(AllPlayers) do if ent:IsValid() and ent.userid == userid then return ent end end end; local userid = 'KU_GNdCoZGM'; local inst = get_user(userid); local component = inst.components.mone_lifeinjector_vb; component.eatnum = 20000; component.save_currenthealth = 20000; component.save_maxhealth = 20000; component:HPIncreaseOnLoad();
 
 --local function get_user(userid) for _, ent in pairs(AllPlayers) do if ent:IsValid() and ent.userid == userid then return ent end end end; local userid = 'KU_GNdCoZGM'; local inst = get_user(userid); local component = inst.components.health; print(component.maxhealth);
+
+
+print(inspect(stl_string.split(package.cpath, ";")))
