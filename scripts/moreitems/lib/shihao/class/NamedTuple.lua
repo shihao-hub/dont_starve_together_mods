@@ -53,8 +53,8 @@ function NamedTuple:tostring()
 end
 
 if select("#", ...) == 0 then
-    local person = NamedTuple({ "name", "age", "info" }, { name = "zsh", age = "123", info = { money = 1000000, address = { str = "china" } } })
-    print(person:tostring())
+    --local person = NamedTuple({ "name", "age", "info" }, { name = "zsh", age = "123", info = { money = 1000000, address = { str = "china" } } })
+    --print(person:tostring())
 end
 
 return NamedTuple
