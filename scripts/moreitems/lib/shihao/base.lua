@@ -130,6 +130,19 @@ function module.switch(condition)
     end
 end
 
+function module.get_args(...)
+    return { n = select("#", ...), ... }
+end
+
+---Usage:
+---
+---if br_1 elseif br_2 ... else base.never() end
+---
+---程序是可以扩展的，为此，在最初实现的时候，永远都要写一个 else 分支。
+function module.should_never_reach_here()
+    error("should never reach here.", 3)
+end
+
 ---需要保证整个 for 循环体的逻辑全放在 fn 里面
 ---@return boolean true 为 break，false/nil 为 continue
 function module.continue_or_break(fn)

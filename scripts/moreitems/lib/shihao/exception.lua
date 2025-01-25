@@ -4,8 +4,9 @@
 -- 很烦，太别扭了啊！感觉两个文件很容易相互依赖，虽然将依赖的部分移入 __shared__.lua 是个好办法，但是阅读起来太难受。
 
 local base = require("moreitems.lib.shihao.base")
+local assertion = require("moreitems.lib.shihao.assertion")
 
-local module = {}
+local module = { unittests = {} }
 local static = {}
 
 static.IllegalArgumentException = "IllegalArgumentException"
@@ -28,44 +29,67 @@ local function is_exception(error_msg, target_exception_name)
     return name == static[target_exception_name]
 end
 
----@param msg string
----@param level number
----@param exception_name string
-local function throw_exception(msg, level, exception_name)
-    level = level and level + 2 or 3 -- please make sure that the type of `level` is not a boolean.
-    msg = base.if_then_else(msg, function()
-        return static[exception_name] .. ": " .. msg
-    end, function()
-        return static[exception_name]
-    end)
-    error(msg, level)
+---@overload fun(error_msg:string, exception_name:string)
+---@overload fun(error_msg:string, level:number, exception_name:string)
+local function throw_exception(...)
+    local function main(error_msg, level, exception_name)
+        level = level and level + 2 or 3 -- please make sure that the type of `level` is not a boolean.
+        error_msg = base.if_then_else(error_msg, function()
+            return static[exception_name] .. ": " .. error_msg
+        end, function()
+            return static[exception_name]
+        end)
+        error(error_msg, level)
+    end
+
+    local args = base.get_args(...)
+
+    if args.n == 2 then
+        main(args[1], args[2])
+    elseif args.n == 3 then
+        main(args[1], args[2], args[3])
+    else
+        base.should_never_reach_here()
+    end
 end
 
-function module.is_IllegalArgumentException(error_msg)
-    return is_exception(error_msg, "IllegalArgumentException")
+function module.is_IllegalArgumentException(msg)
+    return is_exception(msg, static.IllegalArgumentException)
 end
 
-function module.throw_IllegalArgumentException(msg, level)
-    throw_exception(msg, level, "IllegalArgumentException")
+function module.unittests.throw_IllegalArgumentException()
+    -- FIXME: Lua 的错误处理函数里面如果发生错误居然会导致 C stack overflow？这有什么意义？
+    --xpcall(function()
+    --    module.throw_IllegalArgumentException()
+    --end, function(msg)
+    --    --print(msg)
+    --    error(2222)
+    --end)
 end
 
-function module.is_NotImpletedException(error_msg)
-    return is_exception(error_msg, "NotImpletedException")
+---@overload fun()
+function module.throw_IllegalArgumentException(msg)
+    throw_exception(msg, static.IllegalArgumentException)
 end
 
-function module.throw_NotImpletedException(msg, level)
-    throw_exception(msg, level, "NotImpletedException")
+function module.is_NotImpletedException(msg)
+    return is_exception(msg, static.NotImpletedException)
+end
+
+---@overload fun()
+function module.throw_NotImpletedException(msg)
+    throw_exception(msg, static.NotImpletedException)
 end
 
 if select("#", ...) == 0 then
-    local assertion = require("moreitems.lib.shihao.assertion")
+    local unittest = require("moreitems.lib.shihao.module.unittest")
 
-    --[[ is_IllegalArgumentException ]]
-    xpcall(function()
+    local unittests = {}
+    function unittests.is_IllegalArgumentException()
         assertion.assert_true(module.is_IllegalArgumentException("IllegalArgumentException: 123") == true)
-    end, function(msg)
-        io.stderr:write(msg, "\n")
-    end)
+    end
+
+    unittest.run_unittests(unittests)
 end
 
 return module

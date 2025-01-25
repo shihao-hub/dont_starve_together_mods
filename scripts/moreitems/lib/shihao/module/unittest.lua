@@ -5,9 +5,10 @@ local module = {}
 
 -- TestCase
 
----@param source table|nil
-local function _collect_statistics_on_coverage_of_unittests(source)
-    if source == nil then
+---@param module_or_unittests
+local function _collect_statistics_on_coverage_of_unittests(module_or_unittests)
+    local source = module_or_unittests
+    if source.unittests == nil then
         return
     end
     local unittests = source.unittests
@@ -15,12 +16,11 @@ local function _collect_statistics_on_coverage_of_unittests(source)
 end
 
 ---注意，如果某个函数未实现对应的单元测试，需要考虑将其统计出来
----@param unittests table
----@param source table
----@overload fun(unittests:table)
-function module.run_unittests(unittests, source)
-    _collect_statistics_on_coverage_of_unittests(source)
+---@param module_or_unittests table
+function module.run_unittests(module_or_unittests)
+    _collect_statistics_on_coverage_of_unittests(module_or_unittests)
 
+    local unittests = module_or_unittests.unittests or module_or_unittests
     for name, fn in pairs(unittests) do
         base.continue_or_break(function()
             if type(fn) ~= "function" then
